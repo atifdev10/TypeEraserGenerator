@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "ABB3EACE-0859-496C-96B1-CA41A145A8EF",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "performanceAntipatternCheckerEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "TypeEraserGeneratorTests",
+        "name" : "TypeEraserGeneratorTests"
+      }
+    }
+  ],
+  "version" : 1
+}
