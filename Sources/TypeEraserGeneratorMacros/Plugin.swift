@@ -1,10 +1,3 @@
-//
-//  Plugin.swift
-//  TypeEraserGenerator
-//
-//  Created by Atif on 6.12.2025.
-//
-
 import SwiftCompilerPlugin
 import SwiftSyntaxMacros
 
