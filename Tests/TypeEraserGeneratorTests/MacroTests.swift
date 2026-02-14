@@ -39,6 +39,35 @@ struct `Macro Tests` {
                 nonisolated
                 protocol Protocol {}
                 """
+            } expansion: {
+                """
+                @MainActor
+                protocol Protocol {}
+
+                @MainActor
+                struct AnyProtocol: Protocol, TypeEraser {
+                    var base: any Protocol
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                }
+                nonisolated
+                protocol Protocol {}
+
+                nonisolated
+                struct AnyProtocol: Protocol, TypeEraser {
+                    var base: any Protocol
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                }
+                """
             }
         }
 
@@ -2975,12 +3004,69 @@ struct `Macro Tests` {
     }
 
     @Suite
+    struct `Type Alias Tests` {
+        @Test func `Type alias`() {
+            assertMacro {
+                """
+                @TypeErased
+                protocol Protocol {
+                    typealias T = Int
+                }
+                """
+            } expansion: {
+                """
+                protocol Protocol {
+                    typealias T = Int
+                }
+
+                struct AnyProtocol: Protocol, TypeEraser {
+                    var base: any Protocol
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                    typealias T = Int
+                }
+                """
+            }
+        }
+    }
+
+    @Suite
     struct `Automatic Conformance Generation Tests` {
         @Test func `Protocol with equatable conformance`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol: Equatable {}
+                """
+            } expansion: {
+                """
+                protocol Protocol: Equatable {}
+
+                struct AnyProtocol: Protocol, TypeEraser {
+                    var base: any Protocol
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                    static func == (left: Self, right: Self) -> Bool {
+                        return _isEqual(lhs: left.base, rhs: right.base)
+                    }
+                    private static func _isEqual<T: Equatable, U: Equatable>(lhs: T, rhs: U) -> Bool {
+                        if let rhsAsT = rhs as? T {
+                            return lhs == rhsAsT
+                        }
+                        if let lhsAsU = lhs as? U {
+                            return lhsAsU == rhs
+                        }
+                        return false
+                    }
+                }
                 """
             }
         }
@@ -2991,6 +3077,35 @@ struct `Macro Tests` {
                 @TypeErased
                 protocol Protocol: Hashable {}
                 """
+            } expansion: {
+                """
+                protocol Protocol: Hashable {}
+
+                struct AnyProtocol: Protocol, TypeEraser {
+                    var base: any Protocol
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                    func hash(into hasher: inout Hasher) {
+                        hasher.combine(base)
+                    }
+                    static func == (left: Self, right: Self) -> Bool {
+                        return _isEqual(lhs: left.base, rhs: right.base)
+                    }
+                    private static func _isEqual<T: Equatable, U: Equatable>(lhs: T, rhs: U) -> Bool {
+                        if let rhsAsT = rhs as? T {
+                            return lhs == rhsAsT
+                        }
+                        if let lhsAsU = lhs as? U {
+                            return lhsAsU == rhs
+                        }
+                        return false
+                    }
+                }
+                """
             }
         }
 
@@ -2998,6 +3113,13 @@ struct `Macro Tests` {
             assertMacro {
                 """
                 @TypeErased
+                protocol Protocol: Identifiable {}
+                """
+            } diagnostics: {
+                """
+                @TypeErased
+                ┬──────────
+                ╰─ 🛑 Associated type 'ID' must have a erasure specifier
                 protocol Protocol: Identifiable {}
                 """
             }

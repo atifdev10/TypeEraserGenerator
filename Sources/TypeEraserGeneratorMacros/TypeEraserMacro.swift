@@ -86,6 +86,7 @@ enum TypeEraserMacro: PeerMacro {
                 )
 
             case .associatedTypeDecl: break
+            case .typeAliasDecl: break
 
             default:
                 throw ExpansionError.notSupportedDecl(kind: decl.kind)
@@ -1095,12 +1096,7 @@ extension TypeEraserMacro: ExtensionMacro {
                     protocolName: `protocol`.name.trimmed
                 )
 
-            case .typeAliasDecl:
-                var `typealias`: InitializerDeclSyntax {
-                    get { decl.cast(InitializerDeclSyntax.self) }
-                    set { decl = DeclSyntax(newValue) }
-                }
-
+            case .typeAliasDecl: break
             case .associatedTypeDecl: break
 
             default:
