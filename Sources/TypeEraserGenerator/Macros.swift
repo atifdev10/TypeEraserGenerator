@@ -4,22 +4,6 @@
 /// Generates type erasers for the attached protocol.
 ///
 /// - Parameters:
-///   - conformances: Used for exposing protocol inheritances that the macro can't see.
-///   - options: Extra options to change how the macro behaves.
-@attached(extension, names: arbitrary)
-@attached(peer, names: prefixed(Any))
-@attached(member, names: arbitrary)
-public macro TypeErased(
-    conformances: Conformance...,
-    options: TypeEraserOptions = []
-) = #externalMacro(
-    module: "TypeEraserGeneratorMacros",
-    type: "TypeEraserMacro"
-)
-
-/// Generates type erasers for the attached protocol.
-///
-/// - Parameters:
 ///   - options: Extra options to change how the macro behaves.
 @attached(extension, names: arbitrary)
 @attached(peer, names: prefixed(Any))
@@ -244,11 +228,11 @@ public struct TypeEraserOptions: OptionSet, Sendable {
     public static let exportStaticRequirements = TypeEraserOptions(rawValue: 1 << 0)
 }
 
-@TypeErased
-protocol Protocol {
-    @DefaultExternal(aaaaa) init?()
-}
-
-func aaaaa() -> AnyProtocol? {
-    nil
-}
+// @TypeErased
+// protocol Protocol {
+//    @DefaultExternal(aaaaa) init?()
+// }
+//
+// func aaaaa() -> AnyProtocol? {
+//    nil
+// }

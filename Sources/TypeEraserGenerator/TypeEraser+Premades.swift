@@ -3,9 +3,9 @@ import Helpers
 
 /// A type that erases an existential type.
 public protocol TypeEraser {
-    associatedtype T
-    init(erasing: T)
-    var base: T { get }
+    associatedtype _Base_
+    init(erasing: _Base_)
+    var base: _Base_ { get }
 }
 
 extension AnyHashable: TypeEraser {

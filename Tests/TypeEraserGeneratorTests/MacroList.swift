@@ -10,4 +10,6 @@ import SwiftSyntaxMacros
         "DefaultValue": DefaultValueMacro.self,
         "DefaultNone": DefaultNoneMacro.self,
     ]
+#else
+    #error("Run on the host machine")
 #endif

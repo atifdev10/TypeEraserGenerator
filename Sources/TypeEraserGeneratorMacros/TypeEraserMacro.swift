@@ -118,46 +118,9 @@ enum TypeEraserMacro: PeerMacro {
 
         members.insert(contentsOf: items, at: members.startIndex)
 
-        let importedTypes: [TypeSyntax] = try node.arguments?
-            .as(LabeledExprListSyntax.self)?
-            .compactMap { expr in
-                guard expr.label?.trimmedDescription == "conformances" else {
-                    return nil
-                }
-
-                if let value = FunctionCallExprSyntax(expr.expression) {
-                    let arguments: LabeledExprListSyntax = value.arguments
-
-                    let memAccess = MemberAccessExprSyntax(
-                        value.calledExpression
-                    )!
-
-                    switch memAccess.declName.baseName.trimmedDescription {
-                    case "identifiable":
-                        var input = "\(arguments.first!.expression)"
-                        input = input.replacingOccurrences(of: ".self", with: "")
-                        return "Identifiable<\(raw: input)>"
-                    default:
-                        throw ExpansionError.compilerError("Conformance not found")
-                    }
-                }
-
-                let memAccess = MemberAccessExprSyntax(expr.expression)!
-
-                switch memAccess.declName.baseName.trimmedDescription {
-                case "hashable":
-                    return "Hashable"
-                case "equatable":
-                    return "Equatable"
-                default:
-                    throw ExpansionError.compilerError("Conformance not found")
-                }
-            } ?? []
-
-        let inheritances = InheritedTypeListSyntax(itemsBuilder: {
+        let inheritances = InheritedTypeListSyntax {
             `protocol`.inheritanceClause?.inheritedTypes.map(\.self) ?? []
-            importedTypes.compactMap { InheritedTypeSyntax(type: $0) }
-        })
+        }
 
         for inheritance in inheritances {
             if let type = inheritance.type.as(IdentifierTypeSyntax.self) {
@@ -210,8 +173,15 @@ enum TypeEraserMacro: PeerMacro {
     static func convertProtocolToStruct(
         _ prot: ProtocolDeclSyntax
     ) -> StructDeclSyntax {
-        let keywordToStruct = prot.with(\.protocolKeyword, "struct ")
-        let decl: DeclSyntax = "\(raw: keywordToStruct)"
+        var toBeStruct = prot
+        var protocolKeyword = prot.protocolKeyword
+        var leadingTrivia = protocolKeyword.leadingTrivia
+        var trailingTrivia = protocolKeyword.trailingTrivia
+        toBeStruct.protocolKeyword = "struct"
+        toBeStruct.protocolKeyword.leadingTrivia = leadingTrivia
+        toBeStruct.protocolKeyword.trailingTrivia = trailingTrivia
+
+        let decl: DeclSyntax = "\(raw: toBeStruct)"
 
         let conformance = InheritanceClauseSyntax(
             inheritedTypes: .init {
@@ -239,11 +209,17 @@ enum TypeEraserMacro: PeerMacro {
             } else if let generic = inheritance.genericArgumentClause?
                 .arguments.first?.argument {
                 "\(generic)"
-            } else if let clause = `protocol`.genericWhereClause?
-                .requirements.first?.requirement
-                .as(SameTypeRequirementSyntax.self),
-                clause.leftType == .type("ID") ||
-                clause.leftType == .type("Self.ID") {
+            } else if
+                let clauses = `protocol`.genericWhereClause?
+                .requirements.compactMap({
+                    $0.requirement.as(SameTypeRequirementSyntax.self)
+                }),
+                let clause = clauses.first(
+                    where: {
+                        $0.leftType.trimmedDescription == "ID" ||
+                            $0.leftType.trimmedDescription == "Self.ID"
+                    }
+                ) {
                 "\(clause.rightType)"
             } else {
                 members.compactMap { member -> String? in
@@ -268,9 +244,21 @@ enum TypeEraserMacro: PeerMacro {
 
             associates["ID"] = value
 
-            members.append(.init(decl: """
-            var id: ID { self.base.id }
-            """ as DeclSyntax))
+            let variableNames = members
+                .compactMap {
+                    $0.decl.as(VariableDeclSyntax.self)?.bindings
+                        .compactMap {
+                            $0.pattern.as(IdentifierPatternSyntax.self)
+                        }
+                }
+                .flatMap(\.self)
+                .map(\.identifier.text)
+
+            if !variableNames.contains("id") {
+                members.append(.init(decl: """
+                var id: ID { self.base.id }
+                """ as DeclSyntax))
+            }
 
         case "Hashable":
             members.append(.init(decl: """
@@ -1106,6 +1094,12 @@ extension TypeEraserMacro: ExtensionMacro {
                     node: node,
                     protocolName: `protocol`.name.trimmed
                 )
+
+            case .typeAliasDecl:
+                var `typealias`: InitializerDeclSyntax {
+                    get { decl.cast(InitializerDeclSyntax.self) }
+                    set { decl = DeclSyntax(newValue) }
+                }
 
             case .associatedTypeDecl: break
 

@@ -11,7 +11,7 @@ public func __implicitCast<T1, T2>(
     }
 
     func initializeTypeEraser<T: TypeEraser>(_: T.Type) -> T2? {
-        guard let input = input as? T.T else { return nil }
+        guard let input = input as? T._Base_ else { return nil }
         return T(erasing: input) as? T2
     }
 

@@ -5,7 +5,7 @@ import Testing
 struct `Macro Tests` {
     @Suite
     struct `Eraser Tests` {
-        @Test func `Type erased protocol`() {
+        @Test func `Type erased on protocol`() {
             assertMacro {
                 """
                 @TypeErased
@@ -28,7 +28,21 @@ struct `Macro Tests` {
             }
         }
 
-        @Test func `Type erased non-protocol`() {
+        @Test func `Type erased on isolated protocol`() {
+            assertMacro {
+                """
+                @TypeErased
+                @MainActor
+                protocol Protocol {}
+
+                @TypeErased
+                nonisolated
+                protocol Protocol {}
+                """
+            }
+        }
+
+        @Test func `Type erased on non-protocol`() {
             assertMacro {
                 """
                 @TypeErased
@@ -2954,6 +2968,155 @@ struct `Macro Tests` {
                 ╰─ 🛑 Associated type 'T' must have a erasure specifier
                 protocol Protocol {
                     associatedtype T
+                }
+                """
+            }
+        }
+    }
+
+    @Suite
+    struct `Automatic Conformance Generation Tests` {
+        @Test func `Protocol with equatable conformance`() {
+            assertMacro {
+                """
+                @TypeErased
+                protocol Protocol: Equatable {}
+                """
+            }
+        }
+
+        @Test func `Protocol with hashable conformance`() {
+            assertMacro {
+                """
+                @TypeErased
+                protocol Protocol: Hashable {}
+                """
+            }
+        }
+
+        @Test func `Protocol with identifiable conformance without erasure specifier constraint`() {
+            assertMacro {
+                """
+                @TypeErased
+                protocol Protocol: Identifiable {}
+                """
+            }
+        }
+
+        @Test func `Protocol with identifiable conformance with varying constraining methods`() {
+            assertMacro {
+                """
+                @TypeErased
+                protocol Protocol: Identifiable {
+                    @ErasureType<AnyHashable>
+                    associatedtype ID: Hashable
+                }
+
+                @TypeErased
+                protocol Protocol: Identifiable where ID == Int {}
+
+                @TypeErased
+                protocol Protocol: Identifiable where Self.ID == Int {}
+
+                @TypeErased
+                protocol Protocol: Identifiable<Int> {}
+
+                @TypeErased
+                protocol Protocol: Identifiable {
+                    var id: Int { get }
+                }
+                """
+            } expansion: {
+                """
+                protocol Protocol: Identifiable {
+                    associatedtype ID: Hashable
+                }
+
+                struct AnyProtocol: Protocol, TypeEraser {
+                    typealias ID = AnyHashable
+                    var base: any Protocol
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                    var id: ID {
+                        self.base.id
+                    }
+                }
+                protocol Protocol: Identifiable where ID == Int {}
+
+                struct AnyProtocol: Protocol, TypeEraser where ID == Int {
+                    typealias ID = Int
+                    var base: any Protocol
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                    var id: ID {
+                        self.base.id
+                    }
+                }
+                protocol Protocol: Identifiable where Self.ID == Int {}
+
+                struct AnyProtocol: Protocol, TypeEraser where Self.ID == Int {
+                    typealias ID = Int
+                    var base: any Protocol
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                    var id: ID {
+                        self.base.id
+                    }
+                }
+                protocol Protocol: Identifiable<Int> {}
+
+                struct AnyProtocol: Protocol, TypeEraser {
+                    typealias ID = Int
+                    var base: any Protocol
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                    var id: ID {
+                        self.base.id
+                    }
+                }
+                protocol Protocol: Identifiable {
+                    var id: Int { get }
+                }
+
+                struct AnyProtocol: Protocol, TypeEraser {
+                    typealias ID = Int
+                    var base: any Protocol
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                    var id: Int {
+                        get {
+                            func id_genericOpen<T: Protocol>(_: T) -> Int  {
+                            	    var base: T {
+                            	        get {
+                            	            self.base as! T
+                            	        }
+
+                            	    };
+                            	    return base.id
+                            	};
+                            	return __implicitCast(_openExistential(self.base, do: id_genericOpen))
+                        }
+                    }
                 }
                 """
             }
