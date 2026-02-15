@@ -1,7 +1,7 @@
 import MacroTesting
 import Testing
 
-@Suite(.macros(testMacros))
+@Suite(.macros(testMacros, record: .failed))
 struct `Macro Tests` {
     @Suite
     struct `Eraser Tests` {
@@ -161,147 +161,139 @@ struct `Macro Tests` {
                     var variable: Any {
                         get {
                             func variable_genericOpen<T: Protocol>(_: T) -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    return base.variable
-                            	};
-                            	return __implicitCast(_openExistential(self.base, do: variable_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                return base.variable
+                            };
+                            return __implicitCast(_openExistential(self.base, do: variable_genericOpen))
                         }
                     }
                     var variable: Any {
                         get {
                             func variable_genericOpen<T: Protocol>(_: T) -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    return base.variable
-                            	};
-                            	return __implicitCast(_openExistential(self.base, do: variable_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                return base.variable
+                            };
+                            return __implicitCast(_openExistential(self.base, do: variable_genericOpen))
                         }
                         set {
                             func variable_genericOpen<T: Protocol>(_: T) {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-                            	        set {
-                            	            self.base = newValue
-                            	        }
-                            	    };
-                            	    base.variable = __implicitCast(newValue)
-                            	};
-                            	_openExistential(self.base, do: variable_genericOpen)
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                    set {
+                                        self.base = newValue
+                                    }
+                                };
+                                base.variable = __implicitCast(newValue)
+                            };
+                            _openExistential(self.base, do: variable_genericOpen)
                         }
                     }
                     var variable: Any {
                         get async {
                             func variable_genericOpen<T: Protocol>(_: T) async -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    return await base.variable
-                            	};
-                            	return await __implicitCast(_openExistential(self.base, do: variable_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                return await base.variable
+                            };
+                            return await __implicitCast(_openExistential(self.base, do: variable_genericOpen))
                         }
                     }
                     var variable: Any {
                         get throws {
                             func variable_genericOpen<T: Protocol>(_: T) throws -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    do {
-                            	        return try base.variable
-                            	    } catch let error {
-                            	        throw __implicitCast(error)
-                            	    }
-                            	};
-                            	return try __implicitCast(_openExistential(self.base, do: variable_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                do {
+                                    return try base.variable
+                                } catch let error {
+                                    throw __implicitCast(error)
+                                }
+                            };
+                            return try __implicitCast(_openExistential(self.base, do: variable_genericOpen))
                         }
                     }
                     var variable: Any {
                         get async throws {
                             func variable_genericOpen<T: Protocol>(_: T) async throws -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    do {
-                            	        return try await base.variable
-                            	    } catch let error {
-                            	        throw __implicitCast(error)
-                            	    }
-                            	};
-                            	return try await __implicitCast(_openExistential(self.base, do: variable_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                do {
+                                    return try await base.variable
+                                } catch let error {
+                                    throw __implicitCast(error)
+                                }
+                            };
+                            return try await __implicitCast(_openExistential(self.base, do: variable_genericOpen))
                         }
                     }
                     var variable: Any {
                         get throws(any Error) {
                             func variable_genericOpen<T: Protocol>(_: T) throws(any Error) -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    do {
-                            	        return try base.variable
-                            	    } catch let error {
-                            	        throw __implicitCast(error)
-                            	    }
-                            	};
-                            	return try __implicitCast(_openExistential(self.base, do: variable_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                do {
+                                    return try base.variable
+                                } catch let error {
+                                    throw __implicitCast(error)
+                                }
+                            };
+                            return try __implicitCast(_openExistential(self.base, do: variable_genericOpen))
                         }
                     }
                     var variable: Any {
                         get throws(SomeError) {
                             func variable_genericOpen<T: Protocol>(_: T) throws(SomeError) -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    do {
-                            	        return try base.variable
-                            	    } catch let error {
-                            	        throw __implicitCast(error)
-                            	    }
-                            	};
-                            	return try __implicitCast(_openExistential(self.base, do: variable_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                do {
+                                    return try base.variable
+                                } catch let error {
+                                    throw __implicitCast(error)
+                                }
+                            };
+                            return try __implicitCast(_openExistential(self.base, do: variable_genericOpen))
                         }
                     }
                     var variable: Any {
                         get throws(Never) {
                             func variable_genericOpen<T: Protocol>(_: T) throws(Never) -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    do {
-                            	        return try base.variable
-                            	    } catch let error {
-                            	        throw __implicitCast(error)
-                            	    }
-                            	};
-                            	return try __implicitCast(_openExistential(self.base, do: variable_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                do {
+                                    return try base.variable
+                                } catch let error {
+                                    throw __implicitCast(error)
+                                }
+                            };
+                            return try __implicitCast(_openExistential(self.base, do: variable_genericOpen))
                         }
                     }
                 }
@@ -695,87 +687,80 @@ struct `Macro Tests` {
                     }
                     func function() {
                         func function_genericOpen<T: Protocol>(_: T) -> Void {
-                        	    var base: T {
-                        	        get {
-                        	            self.base as! T
-                        	        }
-
-                        	    };
-                        	    return base.function()
-                        	};
-                        	return __implicitCast(_openExistential(self.base, do: function_genericOpen))
+                            var base: T {
+                                get {
+                                    self.base as! T
+                                }
+                            };
+                            return base.function()
+                        };
+                        return __implicitCast(_openExistential(self.base, do: function_genericOpen))
                     }
                     func function(label: Any) {
                         func function_genericOpen<T: Protocol>(_: T) -> Void {
-                        	    var base: T {
-                        	        get {
-                        	            self.base as! T
-                        	        }
-
-                        	    };
-                        	    return base.function(label: __implicitCast(label))
-                        	};
-                        	return __implicitCast(_openExistential(self.base, do: function_genericOpen))
+                            var base: T {
+                                get {
+                                    self.base as! T
+                                }
+                            };
+                            return base.function(label: __implicitCast(label))
+                        };
+                        return __implicitCast(_openExistential(self.base, do: function_genericOpen))
                     }
                     func function(_ param0: Any) {
                         func function_genericOpen<T: Protocol>(_: T) -> Void {
-                        	    var base: T {
-                        	        get {
-                        	            self.base as! T
-                        	        }
-
-                        	    };
-                        	    return base.function(__implicitCast(param0))
-                        	};
-                        	return __implicitCast(_openExistential(self.base, do: function_genericOpen))
+                            var base: T {
+                                get {
+                                    self.base as! T
+                                }
+                            };
+                            return base.function(__implicitCast(param0))
+                        };
+                        return __implicitCast(_openExistential(self.base, do: function_genericOpen))
                     }
                     func function(label input: Any) {
                         func function_genericOpen<T: Protocol>(_: T) -> Void {
-                        	    var base: T {
-                        	        get {
-                        	            self.base as! T
-                        	        }
-
-                        	    };
-                        	    return base.function(label: __implicitCast(input))
-                        	};
-                        	return __implicitCast(_openExistential(self.base, do: function_genericOpen))
+                            var base: T {
+                                get {
+                                    self.base as! T
+                                }
+                            };
+                            return base.function(label: __implicitCast(input))
+                        };
+                        return __implicitCast(_openExistential(self.base, do: function_genericOpen))
                     }
                     func function(_ input: Any) {
                         func function_genericOpen<T: Protocol>(_: T) -> Void {
-                        	    var base: T {
-                        	        get {
-                        	            self.base as! T
-                        	        }
-
-                        	    };
-                        	    return base.function(__implicitCast(input))
-                        	};
-                        	return __implicitCast(_openExistential(self.base, do: function_genericOpen))
+                            var base: T {
+                                get {
+                                    self.base as! T
+                                }
+                            };
+                            return base.function(__implicitCast(input))
+                        };
+                        return __implicitCast(_openExistential(self.base, do: function_genericOpen))
                     }
                     func function(label _: Any) {
                         func function_genericOpen<T: Protocol>(_: T) -> Void {
-                        	    var base: T {
-                        	        get {
-                        	            self.base as! T
-                        	        }
-
-                        	    };
-                        	    return base.function(label: __implicitCast(label))
-                        	};
-                        	return __implicitCast(_openExistential(self.base, do: function_genericOpen))
+                            var base: T {
+                                get {
+                                    self.base as! T
+                                }
+                            };
+                            return base.function(label: __implicitCast(label))
+                        };
+                        return __implicitCast(_openExistential(self.base, do: function_genericOpen))
                     }
                     func function(_ param0: Any) {
                         func function_genericOpen<T: Protocol>(_: T) -> Void {
-                        	    var base: T {
-                        	        get {
-                        	            self.base as! T
-                        	        }
-
-                        	    };
-                        	    return base.function(__implicitCast(param0))
-                        	};
-                        	return __implicitCast(_openExistential(self.base, do: function_genericOpen))
+                            var base: T {
+                                get {
+                                    self.base as! T
+                                }
+                            };
+                            return base.function(__implicitCast(param0))
+                        };
+                        return __implicitCast(_openExistential(self.base, do: function_genericOpen))
                     }
                 }
                 """
@@ -816,91 +801,85 @@ struct `Macro Tests` {
                     }
                     func function() async {
                         func function_genericOpen<T: Protocol>(_: T) async -> Void {
-                        	    var base: T {
-                        	        get {
-                        	            self.base as! T
-                        	        }
-
-                        	    };
-                        	    return await base.function()
-                        	};
-                        	return await __implicitCast(_openExistential(self.base, do: function_genericOpen))
+                            var base: T {
+                                get {
+                                    self.base as! T
+                                }
+                            };
+                            return await base.function()
+                        };
+                        return await __implicitCast(_openExistential(self.base, do: function_genericOpen))
                     }
                     func function() throws {
                         func function_genericOpen<T: Protocol>(_: T) throws -> Void {
-                        	    var base: T {
-                        	        get {
-                        	            self.base as! T
-                        	        }
-
-                        	    };
-                        	    do {
-                        	        return try base.function()
-                        	    } catch let error {
-                        	        throw __implicitCast(error)
-                        	    }
-                        	};
-                        	return try __implicitCast(_openExistential(self.base, do: function_genericOpen))
+                            var base: T {
+                                get {
+                                    self.base as! T
+                                }
+                            };
+                            do {
+                                return try base.function()
+                            } catch let error {
+                                throw __implicitCast(error)
+                            }
+                        };
+                        return try __implicitCast(_openExistential(self.base, do: function_genericOpen))
                     }
                     func function() async throws {
                         func function_genericOpen<T: Protocol>(_: T) async throws -> Void {
-                        	    var base: T {
-                        	        get {
-                        	            self.base as! T
-                        	        }
-
-                        	    };
-                        	    do {
-                        	        return try await base.function()
-                        	    } catch let error {
-                        	        throw __implicitCast(error)
-                        	    }
-                        	};
-                        	return try await __implicitCast(_openExistential(self.base, do: function_genericOpen))
+                            var base: T {
+                                get {
+                                    self.base as! T
+                                }
+                            };
+                            do {
+                                return try await base.function()
+                            } catch let error {
+                                throw __implicitCast(error)
+                            }
+                        };
+                        return try await __implicitCast(_openExistential(self.base, do: function_genericOpen))
                     }
                     func function() throws(any Error) {
                         func function_genericOpen<T: Protocol>(_: T) throws(any Error) -> Void {
-                        	    var base: T {
-                        	        get {
-                        	            self.base as! T
-                        	        }
-
-                        	    };
-                        	    do {
-                        	        return try base.function()
-                        	    } catch let error {
-                        	        throw __implicitCast(error)
-                        	    }
-                        	};
-                        	return try __implicitCast(_openExistential(self.base, do: function_genericOpen))
+                            var base: T {
+                                get {
+                                    self.base as! T
+                                }
+                            };
+                            do {
+                                return try base.function()
+                            } catch let error {
+                                throw __implicitCast(error)
+                            }
+                        };
+                        return try __implicitCast(_openExistential(self.base, do: function_genericOpen))
                     }
                     func function() throws(SomeError) {
                         func function_genericOpen<T: Protocol>(_: T) throws(SomeError) -> Void {
-                        	    var base: T {
-                        	        get {
-                        	            self.base as! T
-                        	        }
-
-                        	    };
-                        	    do {
-                        	        return try base.function()
-                        	    } catch let error {
-                        	        throw __implicitCast(error)
-                        	    }
-                        	};
-                        	return try __implicitCast(_openExistential(self.base, do: function_genericOpen))
+                            var base: T {
+                                get {
+                                    self.base as! T
+                                }
+                            };
+                            do {
+                                return try base.function()
+                            } catch let error {
+                                throw __implicitCast(error)
+                            }
+                        };
+                        return try __implicitCast(_openExistential(self.base, do: function_genericOpen))
                     }
                     func function() throws(Never) {
                         func function_genericOpen<T: Protocol>(_: T) throws(Never) -> Void {
-                        	    var base: T {
-                        	        get {
-                        	            self.base as! T
-                        	        }
-
-                        	    };
-                        	    return base.function()
-                        	};
-                        	return __implicitCast(_openExistential(self.base, do: function_genericOpen))
+                            var base: T {
+                                get {
+                                    self.base as! T
+                                }
+                            };
+                            return base.function()
+                        };
+                        return __implicitCast(_openExistential(self.base, do: function_genericOpen))
                     }
                 }
                 """
@@ -1295,99 +1274,92 @@ struct `Macro Tests` {
                     subscript() -> Any {
                         get {
                             func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    return base[]
-                            	};
-                            	return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                return base[]
+                            };
+                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                     }
                     subscript(label: Any) -> Any {
                         get {
                             func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    return base[__implicitCast(label)]
-                            	};
-                            	return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                return base[__implicitCast(label)]
+                            };
+                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                     }
                     subscript(_ param0: Any) -> Any {
                         get {
                             func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    return base[__implicitCast(param0)]
-                            	};
-                            	return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                return base[__implicitCast(param0)]
+                            };
+                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                     }
                     subscript(label input: Any) -> Any {
                         get {
                             func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    return base[label: __implicitCast(input)]
-                            	};
-                            	return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                return base[label: __implicitCast(input)]
+                            };
+                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                     }
                     subscript(_ input: Any) -> Any {
                         get {
                             func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    return base[__implicitCast(input)]
-                            	};
-                            	return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                return base[__implicitCast(input)]
+                            };
+                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                     }
                     subscript(label param0: Any) -> Any {
                         get {
                             func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    return base[label: __implicitCast(param0)]
-                            	};
-                            	return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                return base[label: __implicitCast(param0)]
+                            };
+                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                     }
                     subscript(_ param0: Any) -> Any {
                         get {
                             func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    return base[__implicitCast(param0)]
-                            	};
-                            	return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                return base[__implicitCast(param0)]
+                            };
+                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                     }
                 }
@@ -1432,197 +1404,190 @@ struct `Macro Tests` {
                     subscript() -> Any {
                         get {
                             func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    return base[]
-                            	};
-                            	return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                return base[]
+                            };
+                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                         set {
                             func subscript_genericOpen<T: Protocol>(_: T) {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-                            	        set {
-                            	            self.base = newValue
-                            	        }
-                            	    };
-                            	    return base[] = __implicitCast(newValue)
-                            	};
-                            	_openExistential(self.base, do: subscript_genericOpen)
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                    set {
+                                        self.base = newValue
+                                    }
+                                };
+                                return base[] = __implicitCast(newValue)
+                            };
+                            _openExistential(self.base, do: subscript_genericOpen)
                         }
                     }
                     subscript(label: Any) -> Any {
                         get {
                             func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    return base[__implicitCast(label)]
-                            	};
-                            	return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                return base[__implicitCast(label)]
+                            };
+                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                         set {
                             func subscript_genericOpen<T: Protocol>(_: T) {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-                            	        set {
-                            	            self.base = newValue
-                            	        }
-                            	    };
-                            	    return base[__implicitCast(label)] = __implicitCast(newValue)
-                            	};
-                            	_openExistential(self.base, do: subscript_genericOpen)
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                    set {
+                                        self.base = newValue
+                                    }
+                                };
+                                return base[__implicitCast(label)] = __implicitCast(newValue)
+                            };
+                            _openExistential(self.base, do: subscript_genericOpen)
                         }
                     }
                     subscript(_ param0: Any) -> Any {
                         get {
                             func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    return base[__implicitCast(param0)]
-                            	};
-                            	return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                return base[__implicitCast(param0)]
+                            };
+                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                         set {
                             func subscript_genericOpen<T: Protocol>(_: T) {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-                            	        set {
-                            	            self.base = newValue
-                            	        }
-                            	    };
-                            	    return base[__implicitCast(param0)] = __implicitCast(newValue)
-                            	};
-                            	_openExistential(self.base, do: subscript_genericOpen)
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                    set {
+                                        self.base = newValue
+                                    }
+                                };
+                                return base[__implicitCast(param0)] = __implicitCast(newValue)
+                            };
+                            _openExistential(self.base, do: subscript_genericOpen)
                         }
                     }
                     subscript(label input: Any) -> Any {
                         get {
                             func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    return base[label: __implicitCast(input)]
-                            	};
-                            	return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                return base[label: __implicitCast(input)]
+                            };
+                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                         set {
                             func subscript_genericOpen<T: Protocol>(_: T) {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-                            	        set {
-                            	            self.base = newValue
-                            	        }
-                            	    };
-                            	    return base[label: __implicitCast(input)] = __implicitCast(newValue)
-                            	};
-                            	_openExistential(self.base, do: subscript_genericOpen)
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                    set {
+                                        self.base = newValue
+                                    }
+                                };
+                                return base[label: __implicitCast(input)] = __implicitCast(newValue)
+                            };
+                            _openExistential(self.base, do: subscript_genericOpen)
                         }
                     }
                     subscript(_ input: Any) -> Any {
                         get {
                             func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    return base[__implicitCast(input)]
-                            	};
-                            	return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                return base[__implicitCast(input)]
+                            };
+                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                         set {
                             func subscript_genericOpen<T: Protocol>(_: T) {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-                            	        set {
-                            	            self.base = newValue
-                            	        }
-                            	    };
-                            	    return base[__implicitCast(input)] = __implicitCast(newValue)
-                            	};
-                            	_openExistential(self.base, do: subscript_genericOpen)
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                    set {
+                                        self.base = newValue
+                                    }
+                                };
+                                return base[__implicitCast(input)] = __implicitCast(newValue)
+                            };
+                            _openExistential(self.base, do: subscript_genericOpen)
                         }
                     }
                     subscript(label param0: Any) -> Any {
                         get {
                             func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    return base[label: __implicitCast(param0)]
-                            	};
-                            	return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                return base[label: __implicitCast(param0)]
+                            };
+                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                         set {
                             func subscript_genericOpen<T: Protocol>(_: T) {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-                            	        set {
-                            	            self.base = newValue
-                            	        }
-                            	    };
-                            	    return base[label: __implicitCast(param0)] = __implicitCast(newValue)
-                            	};
-                            	_openExistential(self.base, do: subscript_genericOpen)
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                    set {
+                                        self.base = newValue
+                                    }
+                                };
+                                return base[label: __implicitCast(param0)] = __implicitCast(newValue)
+                            };
+                            _openExistential(self.base, do: subscript_genericOpen)
                         }
                     }
                     subscript(_ param0: Any) -> Any {
                         get {
                             func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    return base[__implicitCast(param0)]
-                            	};
-                            	return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                return base[__implicitCast(param0)]
+                            };
+                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                         set {
                             func subscript_genericOpen<T: Protocol>(_: T) {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-                            	        set {
-                            	            self.base = newValue
-                            	        }
-                            	    };
-                            	    return base[__implicitCast(param0)] = __implicitCast(newValue)
-                            	};
-                            	_openExistential(self.base, do: subscript_genericOpen)
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                    set {
+                                        self.base = newValue
+                                    }
+                                };
+                                return base[__implicitCast(param0)] = __implicitCast(newValue)
+                            };
+                            _openExistential(self.base, do: subscript_genericOpen)
                         }
                     }
                 }
@@ -1665,101 +1630,95 @@ struct `Macro Tests` {
                     subscript() -> Any {
                         get async {
                             func subscript_genericOpen<T: Protocol>(_: T) async -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    return await base[]
-                            	};
-                            	return await __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                return await base[]
+                            };
+                            return await __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                     }
                     subscript() -> Any {
                         get throws {
                             func subscript_genericOpen<T: Protocol>(_: T) throws -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    do {
-                            	        return try base[]
-                            	    } catch let error {
-                            	        throw __implicitCast(error)
-                            	    }
-                            	};
-                            	return try __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                do {
+                                    return try base[]
+                                } catch let error {
+                                    throw __implicitCast(error)
+                                }
+                            };
+                            return try __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                     }
                     subscript() -> Any {
                         get async throws {
                             func subscript_genericOpen<T: Protocol>(_: T) async throws -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    do {
-                            	        return try await base[]
-                            	    } catch let error {
-                            	        throw __implicitCast(error)
-                            	    }
-                            	};
-                            	return try await __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                do {
+                                    return try await base[]
+                                } catch let error {
+                                    throw __implicitCast(error)
+                                }
+                            };
+                            return try await __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                     }
                     subscript() -> Any {
                         get throws(any Error) {
                             func subscript_genericOpen<T: Protocol>(_: T) throws(any Error) -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    do {
-                            	        return try base[]
-                            	    } catch let error {
-                            	        throw __implicitCast(error)
-                            	    }
-                            	};
-                            	return try __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                do {
+                                    return try base[]
+                                } catch let error {
+                                    throw __implicitCast(error)
+                                }
+                            };
+                            return try __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                     }
                     subscript() -> Any {
                         get throws(SomeError) {
                             func subscript_genericOpen<T: Protocol>(_: T) throws(SomeError) -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    do {
-                            	        return try base[]
-                            	    } catch let error {
-                            	        throw __implicitCast(error)
-                            	    }
-                            	};
-                            	return try __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                do {
+                                    return try base[]
+                                } catch let error {
+                                    throw __implicitCast(error)
+                                }
+                            };
+                            return try __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                     }
                     subscript() -> Any {
                         get throws(Never) {
                             func subscript_genericOpen<T: Protocol>(_: T) throws(Never) -> Any  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    return base[]
-                            	};
-                            	return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                return base[]
+                            };
+                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                     }
                 }
@@ -2859,10 +2818,10 @@ struct `Macro Tests` {
                     }
                     init?() {
                         if let value: Self = impl1() {
-                        	    self = __implicitCast(value)
-                        	} else {
-                        	    return nil
-                        	}
+                            self = __implicitCast(value)
+                        } else {
+                            return nil
+                        }
                     }
                 }
                 """
@@ -3228,15 +3187,14 @@ struct `Macro Tests` {
                     var id: Int {
                         get {
                             func id_genericOpen<T: Protocol>(_: T) -> Int  {
-                            	    var base: T {
-                            	        get {
-                            	            self.base as! T
-                            	        }
-
-                            	    };
-                            	    return base.id
-                            	};
-                            	return __implicitCast(_openExistential(self.base, do: id_genericOpen))
+                                var base: T {
+                                    get {
+                                        self.base as! T
+                                    }
+                                };
+                                return base.id
+                            };
+                            return __implicitCast(_openExistential(self.base, do: id_genericOpen))
                         }
                     }
                 }

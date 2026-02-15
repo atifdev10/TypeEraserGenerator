@@ -45,7 +45,7 @@ enum ExpansionError: Error, CustomStringConvertible {
             "Only associated types can have a erasure specifier"
 
         case .protocolNotMarked:
-            "Protocol isn't marked to be type erased`"
+            "Protocol isn't marked to be type erased"
 
         case .onlyOneSpecifierAllowed:
             "Requirement can only have one default"

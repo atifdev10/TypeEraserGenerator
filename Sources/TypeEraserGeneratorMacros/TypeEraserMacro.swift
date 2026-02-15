@@ -86,6 +86,7 @@ enum TypeEraserMacro: PeerMacro {
                 )
 
             case .associatedTypeDecl: break
+
             case .typeAliasDecl: break
 
             default:
@@ -175,9 +176,9 @@ enum TypeEraserMacro: PeerMacro {
         _ prot: ProtocolDeclSyntax
     ) -> StructDeclSyntax {
         var toBeStruct = prot
-        var protocolKeyword = prot.protocolKeyword
-        var leadingTrivia = protocolKeyword.leadingTrivia
-        var trailingTrivia = protocolKeyword.trailingTrivia
+        let protocolKeyword = prot.protocolKeyword
+        let leadingTrivia = protocolKeyword.leadingTrivia
+        let trailingTrivia = protocolKeyword.trailingTrivia
         toBeStruct.protocolKeyword = "struct"
         toBeStruct.protocolKeyword.leadingTrivia = leadingTrivia
         toBeStruct.protocolKeyword.trailingTrivia = trailingTrivia
@@ -441,63 +442,65 @@ enum TypeEraserMacro: PeerMacro {
         let awaitKeyword: TokenSyntax = function.isAsync ? "await " : ""
         let tryKeyword: TokenSyntax = function.isThrowing ? "try " : ""
 
-        function.body = try .init {
-            let name: TokenSyntax = "\(function.name)_genericOpen"
-            let effectSpecifier: TokenSyntax =
-                if let specifier = function.signature.effectSpecifiers?.trimmed {
-                    "\(specifier) "
-                } else {
-                    ""
-                }
-            let setter: TokenSyntax = if function.isMutating {
-                "set { self.base = newValue }"
+        let name: TokenSyntax = "\(function.name)_genericOpen"
+        let effectSpecifier: TokenSyntax =
+            if let specifier = function.signature.effectSpecifiers?.trimmed {
+                "\(specifier) "
             } else {
                 ""
             }
-            if let staticBase {
-                "\(tryKeyword)\(awaitKeyword)__implicitCast(\(staticBase).\(function.name)(\(raw: formattedParameters)))"
-            } else if let staticImpl = try getStaticImplType(of: function, node: node) {
-                switch staticImpl {
-                case let .value(tokenSyntax):
-                    "\(tokenSyntax)"
+        let setter: TokenSyntax = if function.isMutating {
+            "set { self.base = newValue }"
+        } else {
+            ""
+        }
+        function.body = if let staticBase {
+            "{\(tryKeyword)\(awaitKeyword)__implicitCast(\(staticBase).\(function.name)(\(raw: formattedParameters)))}"
+        } else if let staticImpl = try getStaticImplType(of: function, node: node) {
+            switch staticImpl {
+            case let .value(tokenSyntax):
+                "{\(tokenSyntax)}"
 
-                case let .type(tokenSyntax):
-                    "\(tryKeyword)\(awaitKeyword)__implicitCast(\(tokenSyntax).\(function.name)(\(raw: formattedParameters)))"
+            case let .type(tokenSyntax):
+                "{\(tryKeyword)\(awaitKeyword)__implicitCast(\(tokenSyntax).\(function.name)(\(raw: formattedParameters)))}"
 
-                case let .direct(tokenSyntax, _):
-                    "\(tryKeyword)\(awaitKeyword)__implicitCast(\(tokenSyntax)(\(raw: formattedParametersPure)))"
+            case let .direct(tokenSyntax, _):
+                "{\(tryKeyword)\(awaitKeyword)__implicitCast(\(tokenSyntax)(\(raw: formattedParametersPure)))}"
 
-                case .fatalError:
-                    staticInaccessibleFatalError
+            case .fatalError:
+                "{\(staticInaccessibleFatalError)}"
+            }
+        } else {
+            if function.isThrowing {
+                """
+                {\
+                func \(name)<T: \(protocolName)>(_: T) \(effectSpecifier)-> \(function.returnType) {\
+                    var base: T {\
+                        get { self.base as! T }\
+                        \(setter)\
+                    };\
+                    do {\
+                        return try \(awaitKeyword)base.\(function.name)(\(raw: formattedParameters))\
+                    } catch let error {\
+                        throw __implicitCast(error)\
+                    }\
+                };\
+                return try \(awaitKeyword)__implicitCast(_openExistential(self.base, do: \(name)))\
                 }
+                """
             } else {
-                if function.isThrowing {
-                    """
-                    func \(name)<T: \(protocolName)>(_: T) \(effectSpecifier)-> \(function.returnType) {
-                        var base: T {
-                            get { self.base as! T }
-                            \(setter)
-                        };
-                        do {
-                            return try \(awaitKeyword)base.\(function.name)(\(raw: formattedParameters))
-                        } catch let error {
-                            throw __implicitCast(error)
-                        }
-                    };
-                    """
-                    "return try \(awaitKeyword)__implicitCast(_openExistential(self.base, do: \(name)))"
-                } else {
-                    """
-                    func \(name)<T: \(protocolName)>(_: T) \(effectSpecifier)-> \(function.returnType) {
-                        var base: T {
-                            get { self.base as! T }
-                            \(setter)
-                        };
-                        return \(awaitKeyword)base.\(function.name)(\(raw: formattedParameters))
-                    };
-                    """
-                    "return \(awaitKeyword)__implicitCast(_openExistential(self.base, do: \(name)))"
+                """
+                {\
+                func \(name)<T: \(protocolName)>(_: T) \(effectSpecifier)-> \(function.returnType) {\
+                    var base: T {\
+                        get { self.base as! T }\
+                        \(setter)\
+                    };\
+                    return \(awaitKeyword)base.\(function.name)(\(raw: formattedParameters))\
+                };\
+                return \(awaitKeyword)__implicitCast(_openExistential(self.base, do: \(name)))\
                 }
+                """
             }
         }
     }
@@ -528,33 +531,30 @@ enum TypeEraserMacro: PeerMacro {
             if let staticImpl = try getStaticImplType(of: variable, node: node) {
                 switch accessor.accessorSpecifier.trimmedDescription {
                 case "get":
-                    accessor.body = .init {
+                    accessor.body =
                         switch staticImpl {
                         case let .value(tokenSyntax):
-                            "__implicitCast(\(tokenSyntax))"
+                            "{__implicitCast(\(tokenSyntax))}"
 
                         case let .type(tokenSyntax):
-                            "__implicitCast(\(tokenSyntax).\(name))"
+                            "{__implicitCast(\(tokenSyntax).\(name))}"
 
                         case let .direct(tokenSyntax, _):
-                            "\(tryKeyword)\(awaitKeyword)__implicitCast(\(tokenSyntax)())"
+                            "{\(tryKeyword)\(awaitKeyword)__implicitCast(\(tokenSyntax)())}"
 
                         case .fatalError:
-                            staticInaccessibleFatalError
+                            "{\(staticInaccessibleFatalError)}"
                         }
-                    }
                 case "set":
-                    accessor.body = .init {
-                        switch staticImpl {
-                        case let .type(tokenSyntax):
-                            "\(tokenSyntax).\(name) = __implicitCast(newValue)"
+                    accessor.body = switch staticImpl {
+                    case let .type(tokenSyntax):
+                        "{\(tokenSyntax).\(name) = __implicitCast(newValue)}"
 
-                        case let .direct(_, tokenSyntax?):
-                            "\(tryKeyword)\(awaitKeyword)\(tokenSyntax)(newValue)"
+                    case let .direct(_, tokenSyntax?):
+                        "{\(tryKeyword)\(awaitKeyword)\(tokenSyntax)(newValue)}"
 
-                        case .direct, .value, .fatalError:
-                            staticInaccessibleFatalError
-                        }
+                    case .direct, .value, .fatalError:
+                        "{\(staticInaccessibleFatalError)}"
                     }
                 default:
                     throw ExpansionError
@@ -579,56 +579,58 @@ enum TypeEraserMacro: PeerMacro {
                     ""
                 }
 
-                accessor.body = .init {
-                    if let staticBase {
-                        "\(tryKeyword)\(awaitKeyword)__implicitCast(\(staticBase).\(name))"
-                    } else {
-                        if accessor.isThrowing {
-                            """
-                            func \(name)_genericOpen<T: \(protocolName)>(_: T) \(effectSpecifier)-> \(type) {
-                                var base: T {
-                                    get { self.base as! T }
-                                    \(setter)
-                                };
-                                do {
-                                    return try \(awaitKeyword)base.\(name)
-                                } catch let error {
-                                    throw __implicitCast(error)
-                                }
-                            };
-                            """
-                            "return try \(awaitKeyword)__implicitCast(_openExistential(self.base, do: \(name)_genericOpen))"
-                        } else {
-                            """
-                            func \(name)_genericOpen<T: \(protocolName)>(_: T) \(effectSpecifier)-> \(type) {
-                                var base: T {
-                                    get { self.base as! T }
-                                    \(setter)
-                                };
-                                return \(awaitKeyword)base.\(name)
-                            };
-                            """
-                            "return \(awaitKeyword)__implicitCast(_openExistential(self.base, do: \(name)_genericOpen))"
+                accessor.body = if let staticBase {
+                    "{\(tryKeyword)\(awaitKeyword)__implicitCast(\(staticBase).\(name))}"
+                } else {
+                    if accessor.isThrowing {
+                        """
+                        {\
+                        func \(name)_genericOpen<T: \(protocolName)>(_: T) \(effectSpecifier)-> \(type) {\
+                            var base: T {\
+                                get { self.base as! T }\
+                                \(setter)\
+                            };\
+                            do {\
+                                return try \(awaitKeyword)base.\(name)\
+                            } catch let error {\
+                                throw __implicitCast(error)\
+                            }\
+                        };\
+                        return try \(awaitKeyword)__implicitCast(_openExistential(self.base, do: \(name)_genericOpen))\
                         }
+                        """
+                    } else {
+                        """
+                        {\
+                        func \(name)_genericOpen<T: \(protocolName)>(_: T) \(effectSpecifier)-> \(type) {\
+                            var base: T {\
+                                get { self.base as! T }\
+                                \(setter)\
+                            };\
+                            return \(awaitKeyword)base.\(name)\
+                        };\
+                        return \(awaitKeyword)__implicitCast(_openExistential(self.base, do: \(name)_genericOpen))\
+                        }
+                        """
                     }
                 }
 
             case "set":
-                accessor.body = .init {
-                    if let staticBase {
-                        "\(tryKeyword)\(awaitKeyword)\(staticBase).\(name) = __implicitCast(newValue)"
-                    } else {
-                        """
-                        func \(name)_genericOpen<T: \(protocolName)>(_: T) {
-                            var base: T {
-                                get { self.base as! T }
-                                set { self.base = newValue }
-                            };
-                            base.\(name) = __implicitCast(newValue)
-                        };
-                        """
-                        "_openExistential(self.base, do: \(name)_genericOpen)"
+                accessor.body = if let staticBase {
+                    "{\(tryKeyword)\(awaitKeyword)\(staticBase).\(name) = __implicitCast(newValue)}"
+                } else {
+                    """
+                    {\
+                    func \(name)_genericOpen<T: \(protocolName)>(_: T) {\
+                        var base: T {\
+                            get { self.base as! T }\
+                            set { self.base = newValue }\
+                        };\
+                        base.\(name) = __implicitCast(newValue)\
+                    };\
+                    _openExistential(self.base, do: \(name)_genericOpen)\
                     }
+                    """
                 }
 
             default:
@@ -699,33 +701,29 @@ enum TypeEraserMacro: PeerMacro {
             if let staticImpl = try getStaticImplType(of: `subscript`, node: node) {
                 switch accessor.accessorSpecifier.trimmedDescription {
                 case "get":
-                    accessor.body = .init {
-                        switch staticImpl {
-                        case let .value(tokenSyntax):
-                            "__implicitCast(\(tokenSyntax))"
+                    accessor.body = switch staticImpl {
+                    case let .value(tokenSyntax):
+                        "{__implicitCast(\(tokenSyntax))}"
 
-                        case let .type(tokenSyntax):
-                            "\(tryKeyword)\(awaitKeyword)__implicitCast(\(tokenSyntax)[\(raw: formattedParameters)])"
+                    case let .type(tokenSyntax):
+                        "{\(tryKeyword)\(awaitKeyword)__implicitCast(\(tokenSyntax)[\(raw: formattedParameters)])}"
 
-                        case let .direct(tokenSyntax, _):
-                            "\(tryKeyword)\(awaitKeyword)__implicitCast(\(tokenSyntax)(\(raw: formattedParametersPure)))"
+                    case let .direct(tokenSyntax, _):
+                        "{\(tryKeyword)\(awaitKeyword)__implicitCast(\(tokenSyntax)(\(raw: formattedParametersPure)))}"
 
-                        case .fatalError:
-                            staticInaccessibleFatalError
-                        }
+                    case .fatalError:
+                        "{\(staticInaccessibleFatalError)}"
                     }
                 case "set":
-                    accessor.body = .init {
-                        switch staticImpl {
-                        case let .type(tokenSyntax):
-                            "\(tokenSyntax)[\(raw: formattedParameters)] = __implicitCast(newValue)"
+                    accessor.body = switch staticImpl {
+                    case let .type(tokenSyntax):
+                        "{\(tokenSyntax)[\(raw: formattedParameters)] = __implicitCast(newValue)}"
 
-                        case let .direct(_, tokenSyntax?):
-                            "\(tryKeyword)\(awaitKeyword)__implicitCast(\(tokenSyntax)(newValue, \(raw: formattedParametersPure)))"
+                    case let .direct(_, tokenSyntax?):
+                        "{\(tryKeyword)\(awaitKeyword)__implicitCast(\(tokenSyntax)(newValue, \(raw: formattedParametersPure)))}"
 
-                        case .value, .fatalError, .direct:
-                            staticInaccessibleFatalError
-                        }
+                    case .value, .fatalError, .direct:
+                        "{\(staticInaccessibleFatalError)}"
                     }
                 default:
                     throw ExpansionError
@@ -736,73 +734,75 @@ enum TypeEraserMacro: PeerMacro {
 
             switch accessor.accessorSpecifier.trimmedDescription {
             case "get":
-                accessor.body = .init {
-                    let effectSpecifier: TokenSyntax =
-                        if let specifier = accessor.effectSpecifiers?.trimmed {
-                            "\(specifier) "
-                        } else {
-                            ""
-                        }
-                    let setter: TokenSyntax = if accessor.isMutating {
-                        "set { self.base = newValue }"
+                let effectSpecifier: TokenSyntax =
+                    if let specifier = accessor.effectSpecifiers?.trimmed {
+                        "\(specifier) "
                     } else {
                         ""
                     }
+                let setter: TokenSyntax = if accessor.isMutating {
+                    "set { self.base = newValue }"
+                } else {
+                    ""
+                }
 
-                    if let staticBase {
-                        "\(tryKeyword)\(awaitKeyword)\(staticBase)[\(raw: formattedParameters)]"
-                    } else {
-                        if `subscript`.isThrowing {
-                            """
-                            func subscript_genericOpen<T: \(protocolName)>(_: T) \(effectSpecifier)-> \(`subscript`.returnType) {
-                                var base: T {
-                                    get { self.base as! T }
-                                    \(setter)
-                                };
-                                do {
-                                    return try \(awaitKeyword)base[\(raw: formattedParameters)]
-                                } catch let error {
-                                    throw __implicitCast(error)
-                                }
-                            };
-                            """
-                            "return try \(awaitKeyword)__implicitCast(_openExistential(self.base, do: subscript_genericOpen))"
-                        } else {
-                            """
-                            func subscript_genericOpen<T: \(protocolName)>(_: T) \(effectSpecifier)-> \(`subscript`.returnType) {
-                                var base: T {
-                                    get { self.base as! T }
-                                    \(setter)
-                                };
-                                return \(awaitKeyword)base[\(raw: formattedParameters)]
-                            };
-                            """
-                            "return \(awaitKeyword)__implicitCast(_openExistential(self.base, do: subscript_genericOpen))"
+                accessor.body = if let staticBase {
+                    "\(tryKeyword)\(awaitKeyword)\(staticBase)[\(raw: formattedParameters)]"
+                } else {
+                    if `subscript`.isThrowing {
+                        """
+                        {\
+                        func subscript_genericOpen<T: \(protocolName)>(_: T) \(effectSpecifier)-> \(`subscript`.returnType) {\
+                            var base: T {\
+                                get { self.base as! T }\
+                                \(setter)\
+                            };\
+                            do {\
+                                return try \(awaitKeyword)base[\(raw: formattedParameters)]\
+                            } catch let error {\
+                                throw __implicitCast(error)\
+                            }\
+                        };\
+                        return try \(awaitKeyword)__implicitCast(_openExistential(self.base, do: subscript_genericOpen))\
                         }
+                        """
+                    } else {
+                        """
+                        {\
+                        func subscript_genericOpen<T: \(protocolName)>(_: T) \(effectSpecifier)-> \(`subscript`.returnType) {\
+                            var base: T {\
+                                get { self.base as! T }\
+                                \(setter)\
+                            };\
+                            return \(awaitKeyword)base[\(raw: formattedParameters)]\
+                        };\
+                        return \(awaitKeyword)__implicitCast(_openExistential(self.base, do: subscript_genericOpen))\
+                        }
+                        """
                     }
                 }
             case "set":
-                accessor.body = .init {
-                    if let staticBase {
-                        "\(tryKeyword)\(awaitKeyword)\(staticBase)[\(raw: formattedParameters)] = newValue"
-                    } else {
-                        let setter: TokenSyntax = if accessor.isMutating {
-                            "set { self.base = newValue }"
-                        } else {
-                            ""
-                        }
+                let setter: TokenSyntax = if accessor.isMutating {
+                    "set { self.base = newValue }"
+                } else {
+                    ""
+                }
 
-                        """
-                        func subscript_genericOpen<T: \(protocolName)>(_: T) {
-                            var base: T {
-                                get { self.base as! T }
-                                \(setter)
-                            };
-                            return base[\(raw: formattedParameters)] = __implicitCast(newValue)
-                        };
-                        """
-                        "_openExistential(self.base, do: subscript_genericOpen)"
+                accessor.body = if let staticBase {
+                    "\(tryKeyword)\(awaitKeyword)\(staticBase)[\(raw: formattedParameters)] = newValue"
+                } else {
+                    """
+                    {\
+                    func subscript_genericOpen<T: \(protocolName)>(_: T) {\
+                        var base: T {\
+                            get { self.base as! T }\
+                            \(setter)\
+                        };\
+                        return base[\(raw: formattedParameters)] = __implicitCast(newValue)\
+                    };\
+                    _openExistential(self.base, do: subscript_genericOpen)\
                     }
+                    """
                 }
             default:
                 throw ExpansionError
@@ -849,32 +849,34 @@ enum TypeEraserMacro: PeerMacro {
         let awaitKeyword: TokenSyntax = initializer.isAsync ? "await " : ""
         let tryKeyword: TokenSyntax = initializer.isThrowing ? "try " : ""
 
-        initializer.body = try .init {
-            if let staticImpl = try getStaticImplType(of: initializer, node: node) {
-                switch staticImpl {
-                case let .value(tokenSyntax):
-                    "self = \(tryKeyword)\(awaitKeyword)__implicitCast(\(tokenSyntax))"
+        initializer.body = if let staticImpl = try getStaticImplType(of: initializer, node: node) {
+            switch staticImpl {
+            case let .value(tokenSyntax):
+                "{self = \(tryKeyword)\(awaitKeyword)__implicitCast(\(tokenSyntax))}"
 
-                case let .type(tokenSyntax):
-                    "\(tryKeyword)\(awaitKeyword)self.init(\(tokenSyntax)(\(raw: formattedParameters)))"
+            case let .type(tokenSyntax):
+                "{\(tryKeyword)\(awaitKeyword)self.init(\(tokenSyntax)(\(raw: formattedParameters)))}"
 
-                case let .direct(tokenSyntax, _):
-                    if initializer.isOptional {
-                        """
-                        if let value: Self = \(tryKeyword)\(awaitKeyword)\(tokenSyntax)(\(raw: formattedParametersPure)) {
-                            self = __implicitCast(value)
-                        } else {
-                            return nil
-                        }
-                        """
-                    } else {
-                        "self = __implicitCast(\(tryKeyword)\(awaitKeyword)\(tokenSyntax)(\(raw: formattedParametersPure)))"
+            case let .direct(tokenSyntax, _):
+                if initializer.isOptional {
+                    """
+                    {\
+                    if let value: Self = \(tryKeyword)\(awaitKeyword)\(tokenSyntax)(\(raw: formattedParametersPure)) {\
+                        self = __implicitCast(value)\
+                    } else {\
+                        return nil\
+                    }\
                     }
-
-                case .fatalError:
-                    staticInaccessibleFatalError
+                    """
+                } else {
+                    "{self = __implicitCast(\(tryKeyword)\(awaitKeyword)\(tokenSyntax)(\(raw: formattedParametersPure)))}"
                 }
+
+            case .fatalError:
+                "{\(staticInaccessibleFatalError)}"
             }
+        } else {
+            "{}"
         }
     }
 
@@ -1097,6 +1099,7 @@ extension TypeEraserMacro: ExtensionMacro {
                 )
 
             case .typeAliasDecl: break
+
             case .associatedTypeDecl: break
 
             default:
