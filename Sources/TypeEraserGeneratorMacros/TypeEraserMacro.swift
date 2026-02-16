@@ -474,9 +474,9 @@ enum TypeEraserMacro: PeerMacro {
             if function.isThrowing {
                 """
                 {\
-                func \(name)<T: \(protocolName)>(_: T) \(effectSpecifier)-> \(function.returnType) {\
-                    var base: T {\
-                        get { self.base as! T }\
+                func \(name)<_OpenBase_: \(protocolName)>(_: _OpenBase_) \(effectSpecifier)-> \(function.returnType) {\
+                    var base: _OpenBase_ {\
+                        get { self.base as! _OpenBase_ }\
                         \(setter)\
                     };\
                     do {\
@@ -491,9 +491,9 @@ enum TypeEraserMacro: PeerMacro {
             } else {
                 """
                 {\
-                func \(name)<T: \(protocolName)>(_: T) \(effectSpecifier)-> \(function.returnType) {\
-                    var base: T {\
-                        get { self.base as! T }\
+                func \(name)<_OpenBase_: \(protocolName)>(_: _OpenBase_) \(effectSpecifier)-> \(function.returnType) {\
+                    var base: _OpenBase_ {\
+                        get { self.base as! _OpenBase_ }\
                         \(setter)\
                     };\
                     return \(awaitKeyword)base.\(function.name)(\(raw: formattedParameters))\
@@ -585,9 +585,9 @@ enum TypeEraserMacro: PeerMacro {
                     if accessor.isThrowing {
                         """
                         {\
-                        func \(name)_genericOpen<T: \(protocolName)>(_: T) \(effectSpecifier)-> \(type) {\
-                            var base: T {\
-                                get { self.base as! T }\
+                        func \(name)_genericOpen<_OpenBase_: \(protocolName)>(_: _OpenBase_) \(effectSpecifier)-> \(type) {\
+                            var base: _OpenBase_ {\
+                                get { self.base as! _OpenBase_ }\
                                 \(setter)\
                             };\
                             do {\
@@ -602,9 +602,9 @@ enum TypeEraserMacro: PeerMacro {
                     } else {
                         """
                         {\
-                        func \(name)_genericOpen<T: \(protocolName)>(_: T) \(effectSpecifier)-> \(type) {\
-                            var base: T {\
-                                get { self.base as! T }\
+                        func \(name)_genericOpen<_OpenBase_: \(protocolName)>(_: _OpenBase_) \(effectSpecifier)-> \(type) {\
+                            var base: _OpenBase_ {\
+                                get { self.base as! _OpenBase_ }\
                                 \(setter)\
                             };\
                             return \(awaitKeyword)base.\(name)\
@@ -621,9 +621,9 @@ enum TypeEraserMacro: PeerMacro {
                 } else {
                     """
                     {\
-                    func \(name)_genericOpen<T: \(protocolName)>(_: T) {\
-                        var base: T {\
-                            get { self.base as! T }\
+                    func \(name)_genericOpen<_OpenBase_: \(protocolName)>(_: _OpenBase_) {\
+                        var base: _OpenBase_ {\
+                            get { self.base as! _OpenBase_ }\
                             set { self.base = newValue }\
                         };\
                         base.\(name) = __implicitCast(newValue)\
@@ -752,9 +752,9 @@ enum TypeEraserMacro: PeerMacro {
                     if `subscript`.isThrowing {
                         """
                         {\
-                        func subscript_genericOpen<T: \(protocolName)>(_: T) \(effectSpecifier)-> \(`subscript`.returnType) {\
-                            var base: T {\
-                                get { self.base as! T }\
+                        func subscript_genericOpen<_OpenBase_: \(protocolName)>(_: _OpenBase_) \(effectSpecifier)-> \(`subscript`.returnType) {\
+                            var base: _OpenBase_ {\
+                                get { self.base as! _OpenBase_ }\
                                 \(setter)\
                             };\
                             do {\
@@ -769,9 +769,9 @@ enum TypeEraserMacro: PeerMacro {
                     } else {
                         """
                         {\
-                        func subscript_genericOpen<T: \(protocolName)>(_: T) \(effectSpecifier)-> \(`subscript`.returnType) {\
-                            var base: T {\
-                                get { self.base as! T }\
+                        func subscript_genericOpen<_OpenBase_: \(protocolName)>(_: _OpenBase_) \(effectSpecifier)-> \(`subscript`.returnType) {\
+                            var base: _OpenBase_ {\
+                                get { self.base as! _OpenBase_ }\
                                 \(setter)\
                             };\
                             return \(awaitKeyword)base[\(raw: formattedParameters)]\
@@ -793,9 +793,9 @@ enum TypeEraserMacro: PeerMacro {
                 } else {
                     """
                     {\
-                    func subscript_genericOpen<T: \(protocolName)>(_: T) {\
-                        var base: T {\
-                            get { self.base as! T }\
+                    func subscript_genericOpen<_OpenBase_: \(protocolName)>(_: _OpenBase_) {\
+                        var base: _OpenBase_ {\
+                            get { self.base as! _OpenBase_ }\
                             \(setter)\
                         };\
                         return base[\(raw: formattedParameters)] = __implicitCast(newValue)\

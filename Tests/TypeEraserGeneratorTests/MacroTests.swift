@@ -1,7 +1,7 @@
 import MacroTesting
 import Testing
 
-@Suite(.macros(testMacros, record: .failed))
+@Suite(.macros(testMacros))
 struct `Macro Tests` {
     @Suite
     struct `Eraser Tests` {
@@ -160,10 +160,10 @@ struct `Macro Tests` {
                     }
                     var variable: Any {
                         get {
-                            func variable_genericOpen<T: Protocol>(_: T) -> Any  {
-                                var base: T {
+                            func variable_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 return base.variable
@@ -173,10 +173,10 @@ struct `Macro Tests` {
                     }
                     var variable: Any {
                         get {
-                            func variable_genericOpen<T: Protocol>(_: T) -> Any  {
-                                var base: T {
+                            func variable_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 return base.variable
@@ -184,10 +184,10 @@ struct `Macro Tests` {
                             return __implicitCast(_openExistential(self.base, do: variable_genericOpen))
                         }
                         set {
-                            func variable_genericOpen<T: Protocol>(_: T) {
-                                var base: T {
+                            func variable_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                     set {
                                         self.base = newValue
@@ -200,10 +200,10 @@ struct `Macro Tests` {
                     }
                     var variable: Any {
                         get async {
-                            func variable_genericOpen<T: Protocol>(_: T) async -> Any  {
-                                var base: T {
+                            func variable_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) async -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 return await base.variable
@@ -213,10 +213,10 @@ struct `Macro Tests` {
                     }
                     var variable: Any {
                         get throws {
-                            func variable_genericOpen<T: Protocol>(_: T) throws -> Any  {
-                                var base: T {
+                            func variable_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) throws -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 do {
@@ -230,10 +230,10 @@ struct `Macro Tests` {
                     }
                     var variable: Any {
                         get async throws {
-                            func variable_genericOpen<T: Protocol>(_: T) async throws -> Any  {
-                                var base: T {
+                            func variable_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) async throws -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 do {
@@ -247,10 +247,10 @@ struct `Macro Tests` {
                     }
                     var variable: Any {
                         get throws(any Error) {
-                            func variable_genericOpen<T: Protocol>(_: T) throws(any Error) -> Any  {
-                                var base: T {
+                            func variable_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) throws(any Error) -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 do {
@@ -264,10 +264,10 @@ struct `Macro Tests` {
                     }
                     var variable: Any {
                         get throws(SomeError) {
-                            func variable_genericOpen<T: Protocol>(_: T) throws(SomeError) -> Any  {
-                                var base: T {
+                            func variable_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) throws(SomeError) -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 do {
@@ -281,10 +281,10 @@ struct `Macro Tests` {
                     }
                     var variable: Any {
                         get throws(Never) {
-                            func variable_genericOpen<T: Protocol>(_: T) throws(Never) -> Any  {
-                                var base: T {
+                            func variable_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) throws(Never) -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 do {
@@ -686,10 +686,10 @@ struct `Macro Tests` {
                         self.base = erasing
                     }
                     func function() {
-                        func function_genericOpen<T: Protocol>(_: T) -> Void {
-                            var base: T {
+                        func function_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Void {
+                            var base: _OpenBase_ {
                                 get {
-                                    self.base as! T
+                                    self.base as! _OpenBase_
                                 }
                             };
                             return base.function()
@@ -697,10 +697,10 @@ struct `Macro Tests` {
                         return __implicitCast(_openExistential(self.base, do: function_genericOpen))
                     }
                     func function(label: Any) {
-                        func function_genericOpen<T: Protocol>(_: T) -> Void {
-                            var base: T {
+                        func function_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Void {
+                            var base: _OpenBase_ {
                                 get {
-                                    self.base as! T
+                                    self.base as! _OpenBase_
                                 }
                             };
                             return base.function(label: __implicitCast(label))
@@ -708,10 +708,10 @@ struct `Macro Tests` {
                         return __implicitCast(_openExistential(self.base, do: function_genericOpen))
                     }
                     func function(_ param0: Any) {
-                        func function_genericOpen<T: Protocol>(_: T) -> Void {
-                            var base: T {
+                        func function_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Void {
+                            var base: _OpenBase_ {
                                 get {
-                                    self.base as! T
+                                    self.base as! _OpenBase_
                                 }
                             };
                             return base.function(__implicitCast(param0))
@@ -719,10 +719,10 @@ struct `Macro Tests` {
                         return __implicitCast(_openExistential(self.base, do: function_genericOpen))
                     }
                     func function(label input: Any) {
-                        func function_genericOpen<T: Protocol>(_: T) -> Void {
-                            var base: T {
+                        func function_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Void {
+                            var base: _OpenBase_ {
                                 get {
-                                    self.base as! T
+                                    self.base as! _OpenBase_
                                 }
                             };
                             return base.function(label: __implicitCast(input))
@@ -730,10 +730,10 @@ struct `Macro Tests` {
                         return __implicitCast(_openExistential(self.base, do: function_genericOpen))
                     }
                     func function(_ input: Any) {
-                        func function_genericOpen<T: Protocol>(_: T) -> Void {
-                            var base: T {
+                        func function_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Void {
+                            var base: _OpenBase_ {
                                 get {
-                                    self.base as! T
+                                    self.base as! _OpenBase_
                                 }
                             };
                             return base.function(__implicitCast(input))
@@ -741,10 +741,10 @@ struct `Macro Tests` {
                         return __implicitCast(_openExistential(self.base, do: function_genericOpen))
                     }
                     func function(label _: Any) {
-                        func function_genericOpen<T: Protocol>(_: T) -> Void {
-                            var base: T {
+                        func function_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Void {
+                            var base: _OpenBase_ {
                                 get {
-                                    self.base as! T
+                                    self.base as! _OpenBase_
                                 }
                             };
                             return base.function(label: __implicitCast(label))
@@ -752,10 +752,10 @@ struct `Macro Tests` {
                         return __implicitCast(_openExistential(self.base, do: function_genericOpen))
                     }
                     func function(_ param0: Any) {
-                        func function_genericOpen<T: Protocol>(_: T) -> Void {
-                            var base: T {
+                        func function_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Void {
+                            var base: _OpenBase_ {
                                 get {
-                                    self.base as! T
+                                    self.base as! _OpenBase_
                                 }
                             };
                             return base.function(__implicitCast(param0))
@@ -800,10 +800,10 @@ struct `Macro Tests` {
                         self.base = erasing
                     }
                     func function() async {
-                        func function_genericOpen<T: Protocol>(_: T) async -> Void {
-                            var base: T {
+                        func function_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) async -> Void {
+                            var base: _OpenBase_ {
                                 get {
-                                    self.base as! T
+                                    self.base as! _OpenBase_
                                 }
                             };
                             return await base.function()
@@ -811,10 +811,10 @@ struct `Macro Tests` {
                         return await __implicitCast(_openExistential(self.base, do: function_genericOpen))
                     }
                     func function() throws {
-                        func function_genericOpen<T: Protocol>(_: T) throws -> Void {
-                            var base: T {
+                        func function_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) throws -> Void {
+                            var base: _OpenBase_ {
                                 get {
-                                    self.base as! T
+                                    self.base as! _OpenBase_
                                 }
                             };
                             do {
@@ -826,10 +826,10 @@ struct `Macro Tests` {
                         return try __implicitCast(_openExistential(self.base, do: function_genericOpen))
                     }
                     func function() async throws {
-                        func function_genericOpen<T: Protocol>(_: T) async throws -> Void {
-                            var base: T {
+                        func function_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) async throws -> Void {
+                            var base: _OpenBase_ {
                                 get {
-                                    self.base as! T
+                                    self.base as! _OpenBase_
                                 }
                             };
                             do {
@@ -841,10 +841,10 @@ struct `Macro Tests` {
                         return try await __implicitCast(_openExistential(self.base, do: function_genericOpen))
                     }
                     func function() throws(any Error) {
-                        func function_genericOpen<T: Protocol>(_: T) throws(any Error) -> Void {
-                            var base: T {
+                        func function_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) throws(any Error) -> Void {
+                            var base: _OpenBase_ {
                                 get {
-                                    self.base as! T
+                                    self.base as! _OpenBase_
                                 }
                             };
                             do {
@@ -856,10 +856,10 @@ struct `Macro Tests` {
                         return try __implicitCast(_openExistential(self.base, do: function_genericOpen))
                     }
                     func function() throws(SomeError) {
-                        func function_genericOpen<T: Protocol>(_: T) throws(SomeError) -> Void {
-                            var base: T {
+                        func function_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) throws(SomeError) -> Void {
+                            var base: _OpenBase_ {
                                 get {
-                                    self.base as! T
+                                    self.base as! _OpenBase_
                                 }
                             };
                             do {
@@ -871,10 +871,10 @@ struct `Macro Tests` {
                         return try __implicitCast(_openExistential(self.base, do: function_genericOpen))
                     }
                     func function() throws(Never) {
-                        func function_genericOpen<T: Protocol>(_: T) throws(Never) -> Void {
-                            var base: T {
+                        func function_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) throws(Never) -> Void {
+                            var base: _OpenBase_ {
                                 get {
-                                    self.base as! T
+                                    self.base as! _OpenBase_
                                 }
                             };
                             return base.function()
@@ -1273,10 +1273,10 @@ struct `Macro Tests` {
                     }
                     subscript() -> Any {
                         get {
-                            func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 return base[]
@@ -1286,10 +1286,10 @@ struct `Macro Tests` {
                     }
                     subscript(label: Any) -> Any {
                         get {
-                            func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 return base[__implicitCast(label)]
@@ -1299,10 +1299,10 @@ struct `Macro Tests` {
                     }
                     subscript(_ param0: Any) -> Any {
                         get {
-                            func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 return base[__implicitCast(param0)]
@@ -1312,10 +1312,10 @@ struct `Macro Tests` {
                     }
                     subscript(label input: Any) -> Any {
                         get {
-                            func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 return base[label: __implicitCast(input)]
@@ -1325,10 +1325,10 @@ struct `Macro Tests` {
                     }
                     subscript(_ input: Any) -> Any {
                         get {
-                            func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 return base[__implicitCast(input)]
@@ -1338,10 +1338,10 @@ struct `Macro Tests` {
                     }
                     subscript(label param0: Any) -> Any {
                         get {
-                            func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 return base[label: __implicitCast(param0)]
@@ -1351,10 +1351,10 @@ struct `Macro Tests` {
                     }
                     subscript(_ param0: Any) -> Any {
                         get {
-                            func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 return base[__implicitCast(param0)]
@@ -1403,10 +1403,10 @@ struct `Macro Tests` {
                     }
                     subscript() -> Any {
                         get {
-                            func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 return base[]
@@ -1414,10 +1414,10 @@ struct `Macro Tests` {
                             return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                         set {
-                            func subscript_genericOpen<T: Protocol>(_: T) {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                     set {
                                         self.base = newValue
@@ -1430,10 +1430,10 @@ struct `Macro Tests` {
                     }
                     subscript(label: Any) -> Any {
                         get {
-                            func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 return base[__implicitCast(label)]
@@ -1441,10 +1441,10 @@ struct `Macro Tests` {
                             return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                         set {
-                            func subscript_genericOpen<T: Protocol>(_: T) {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                     set {
                                         self.base = newValue
@@ -1457,10 +1457,10 @@ struct `Macro Tests` {
                     }
                     subscript(_ param0: Any) -> Any {
                         get {
-                            func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 return base[__implicitCast(param0)]
@@ -1468,10 +1468,10 @@ struct `Macro Tests` {
                             return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                         set {
-                            func subscript_genericOpen<T: Protocol>(_: T) {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                     set {
                                         self.base = newValue
@@ -1484,10 +1484,10 @@ struct `Macro Tests` {
                     }
                     subscript(label input: Any) -> Any {
                         get {
-                            func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 return base[label: __implicitCast(input)]
@@ -1495,10 +1495,10 @@ struct `Macro Tests` {
                             return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                         set {
-                            func subscript_genericOpen<T: Protocol>(_: T) {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                     set {
                                         self.base = newValue
@@ -1511,10 +1511,10 @@ struct `Macro Tests` {
                     }
                     subscript(_ input: Any) -> Any {
                         get {
-                            func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 return base[__implicitCast(input)]
@@ -1522,10 +1522,10 @@ struct `Macro Tests` {
                             return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                         set {
-                            func subscript_genericOpen<T: Protocol>(_: T) {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                     set {
                                         self.base = newValue
@@ -1538,10 +1538,10 @@ struct `Macro Tests` {
                     }
                     subscript(label param0: Any) -> Any {
                         get {
-                            func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 return base[label: __implicitCast(param0)]
@@ -1549,10 +1549,10 @@ struct `Macro Tests` {
                             return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                         set {
-                            func subscript_genericOpen<T: Protocol>(_: T) {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                     set {
                                         self.base = newValue
@@ -1565,10 +1565,10 @@ struct `Macro Tests` {
                     }
                     subscript(_ param0: Any) -> Any {
                         get {
-                            func subscript_genericOpen<T: Protocol>(_: T) -> Any  {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 return base[__implicitCast(param0)]
@@ -1576,10 +1576,10 @@ struct `Macro Tests` {
                             return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
                         }
                         set {
-                            func subscript_genericOpen<T: Protocol>(_: T) {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                     set {
                                         self.base = newValue
@@ -1629,10 +1629,10 @@ struct `Macro Tests` {
                     }
                     subscript() -> Any {
                         get async {
-                            func subscript_genericOpen<T: Protocol>(_: T) async -> Any  {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) async -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 return await base[]
@@ -1642,10 +1642,10 @@ struct `Macro Tests` {
                     }
                     subscript() -> Any {
                         get throws {
-                            func subscript_genericOpen<T: Protocol>(_: T) throws -> Any  {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) throws -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 do {
@@ -1659,10 +1659,10 @@ struct `Macro Tests` {
                     }
                     subscript() -> Any {
                         get async throws {
-                            func subscript_genericOpen<T: Protocol>(_: T) async throws -> Any  {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) async throws -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 do {
@@ -1676,10 +1676,10 @@ struct `Macro Tests` {
                     }
                     subscript() -> Any {
                         get throws(any Error) {
-                            func subscript_genericOpen<T: Protocol>(_: T) throws(any Error) -> Any  {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) throws(any Error) -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 do {
@@ -1693,10 +1693,10 @@ struct `Macro Tests` {
                     }
                     subscript() -> Any {
                         get throws(SomeError) {
-                            func subscript_genericOpen<T: Protocol>(_: T) throws(SomeError) -> Any  {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) throws(SomeError) -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 do {
@@ -1710,10 +1710,10 @@ struct `Macro Tests` {
                     }
                     subscript() -> Any {
                         get throws(Never) {
-                            func subscript_genericOpen<T: Protocol>(_: T) throws(Never) -> Any  {
-                                var base: T {
+                            func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) throws(Never) -> Any  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 return base[]
@@ -3186,10 +3186,10 @@ struct `Macro Tests` {
                     }
                     var id: Int {
                         get {
-                            func id_genericOpen<T: Protocol>(_: T) -> Int  {
-                                var base: T {
+                            func id_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Int  {
+                                var base: _OpenBase_ {
                                     get {
-                                        self.base as! T
+                                        self.base as! _OpenBase_
                                     }
                                 };
                                 return base.id
