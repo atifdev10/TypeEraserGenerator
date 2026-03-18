@@ -13,13 +13,20 @@ struct `Macro Tests` {
                 """
             } expansion: {
                 """
-                protocol Protocol {}
+                protocol Protocol {
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
+                }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -42,27 +49,41 @@ struct `Macro Tests` {
             } expansion: {
                 """
                 @MainActor
-                protocol Protocol {}
+                protocol Protocol {
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
+                }
 
                 @MainActor
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
                 }
                 nonisolated
-                protocol Protocol {}
+                protocol Protocol {
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
+                }
 
                 nonisolated
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -122,13 +143,13 @@ struct `Macro Tests` {
 
     @Suite
     struct `Variable Tests` {
-        @Test func `Standard variables`() {
+        @Test(.tags(.modifiers))
+        func `Standard variables with varying modifiers`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
                     var variable: Any { get }
-                    var variable: Any { get set }
                     var variable: Any { get async }
                     var variable: Any { get throws }
                     var variable: Any { get async throws }
@@ -141,20 +162,25 @@ struct `Macro Tests` {
                 """
                 protocol Protocol {
                     var variable: Any { get }
-                    var variable: Any { get set }
                     var variable: Any { get async }
                     var variable: Any { get throws }
                     var variable: Any { get async throws }
                     var variable: Any { get throws(any Error) }
                     var variable: Any { get throws(SomeError) }
                     var variable: Any { get throws(Never) }
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -169,33 +195,6 @@ struct `Macro Tests` {
                                 return base.variable
                             };
                             return __implicitCast(_openExistential(self.base, do: variable_genericOpen))
-                        }
-                    }
-                    var variable: Any {
-                        get {
-                            func variable_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
-                                var base: _OpenBase_ {
-                                    get {
-                                        self.base as! _OpenBase_
-                                    }
-                                };
-                                return base.variable
-                            };
-                            return __implicitCast(_openExistential(self.base, do: variable_genericOpen))
-                        }
-                        set {
-                            func variable_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) {
-                                var base: _OpenBase_ {
-                                    get {
-                                        self.base as! _OpenBase_
-                                    }
-                                    set {
-                                        self.base = newValue
-                                    }
-                                };
-                                base.variable = __implicitCast(newValue)
-                            };
-                            _openExistential(self.base, do: variable_genericOpen)
                         }
                     }
                     var variable: Any {
@@ -301,37 +300,224 @@ struct `Macro Tests` {
             }
         }
 
-        @Test func `Standard variables with default specifiers`() {
+        @Test func `Standard variables with setter`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultExternal(impl) var variable: Any { get }
-                    @DefaultType<Type> var variable: Any { get }
-                    @DefaultValue(1) var variable: Any { get }
-                    @DefaultNone var variable: Any { get }
+                    var variable: Any { get set }
+                }
+                """
+            } expansion: {
+                """
+                protocol Protocol {
+                    var variable: Any { get set }
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
+                }
+
+                struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
+                    var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                    var variable: Any {
+                        get {
+                            func variable_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
+                                var base: _OpenBase_ {
+                                    get {
+                                        self.base as! _OpenBase_
+                                    }
+                                };
+                                return base.variable
+                            };
+                            return __implicitCast(_openExistential(self.base, do: variable_genericOpen))
+                        }
+                        set {
+                            func variable_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) {
+                                var base: _OpenBase_ {
+                                    get {
+                                        self.base as! _OpenBase_
+                                    }
+                                    set {
+                                        self.base = newValue
+                                    }
+                                };
+                                base.variable = __implicitCast(newValue)
+                            };
+                            _openExistential(self.base, do: variable_genericOpen)
+                        }
+                    }
+                }
+                """
+            }
+        }
+
+        @Test(.tags(.default))
+        func `Standard variables with default specifiers`() {
+            assertMacro {
+                """
+                @TypeErased
+                protocol Protocol {
+                    @Default(.external) var variable: Any { get }
+                    @Default(.type(Type.self)) var variable: Any { get }
+                    @Default(.value(1)) var variable: Any { get }
+                    @Default(.error) var variable: Any { get }
                 }
                 """
             } diagnostics: {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultExternal(impl) var variable: Any { get }
-                    @DefaultType<Type> var variable: Any { get }
-                    ┬─────────────────
+                    @Default(.external) var variable: Any { get }
+                    ┬──────────────────
                     ╰─ 🛑 Only static requirements can have a default
-                    @DefaultValue(1) var variable: Any { get }
+                    @Default(.type(Type.self)) var variable: Any { get }
+                    ┬─────────────────────────
+                    ╰─ 🛑 Only static requirements can have a default
+                    @Default(.value(1)) var variable: Any { get }
+                    ┬──────────────────
+                    ╰─ 🛑 Only static requirements can have a default
+                    @Default(.error) var variable: Any { get }
                     ┬───────────────
-                    ╰─ 🛑 Only static requirements can have a default
-                    @DefaultNone var variable: Any { get }
-                    ┬───────────
                     ╰─ 🛑 Only static requirements can have a default
                 }
                 """
             }
         }
 
-        @Test func `Static non-marked variable`() {
+        @Test(.tags(.modifiers, .option))
+        func `Standard variables with assureNoAssociates flag with varying modifiers`() {
+            assertMacro {
+                """
+                @TypeErased(options: .assureNoAssociates)
+                protocol Protocol {
+                    var variable: Any { get }
+                    var variable: Any { get async }
+                    var variable: Any { get throws }
+                    var variable: Any { get async throws }
+                    var variable: Any { get throws(any Error) }
+                    var variable: Any { get throws(SomeError) }
+                    var variable: Any { get throws(Never) }
+                }
+                """
+            } expansion: {
+                """
+                protocol Protocol {
+                    var variable: Any { get }
+                    var variable: Any { get async }
+                    var variable: Any { get throws }
+                    var variable: Any { get async throws }
+                    var variable: Any { get throws(any Error) }
+                    var variable: Any { get throws(SomeError) }
+                    var variable: Any { get throws(Never) }
+
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
+                }
+
+                struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
+                    var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                    var variable: Any {
+                        get {
+                            base.variable
+                        }
+                    }
+                    var variable: Any {
+                        get async {
+                            await base.variable
+                        }
+                    }
+                    var variable: Any {
+                        get throws {
+                            try base.variable
+                        }
+                    }
+                    var variable: Any {
+                        get async throws {
+                            try await base.variable
+                        }
+                    }
+                    var variable: Any {
+                        get throws(any Error) {
+                            try base.variable
+                        }
+                    }
+                    var variable: Any {
+                        get throws(SomeError) {
+                            try base.variable
+                        }
+                    }
+                    var variable: Any {
+                        get throws(Never) {
+                            try base.variable
+                        }
+                    }
+                }
+                """
+            }
+        }
+
+        @Test(.tags(.option))
+        func `Standard variables with assureNoAssociates flag with setter`() {
+            assertMacro {
+                """
+                @TypeErased(options: .assureNoAssociates)
+                protocol Protocol {
+                    var variable: Any { get set }
+                }
+                """
+            } expansion: {
+                """
+                protocol Protocol {
+                    var variable: Any { get set }
+
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
+                }
+
+                struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
+                    var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                    var variable: Any {
+                        get {
+                            base.variable
+                        }
+                        set {
+                            base.variable = newValue
+                        }
+                    }
+                }
+                """
+            }
+        }
+
+        @Test(.tags(.static))
+        func `Static non-marked variable`() {
             assertMacro {
                 """
                 @TypeErased
@@ -351,25 +537,32 @@ struct `Macro Tests` {
             }
         }
 
-        @Test func `Static variables without setter with default value`() {
+        @Test(.tags(.static, .default))
+        func `Static variables without setter with default value`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultValue(1) static var variable: Any { get }
+                    @Default(.value(1)) static var variable: Any { get }
                 }
                 """
             } expansion: {
                 """
                 protocol Protocol {
                     static var variable: Any { get }
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -383,59 +576,86 @@ struct `Macro Tests` {
             }
         }
 
-        @Test func `Static variable with setter and default value`() {
+        @Test(.tags(.static, .default))
+        func `Static variable with setter and default value`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultValue(1) static var variable: Any { get set }
+                    @Default(.value(1)) static var variable: Any { get set }
                 }
                 """
-            } diagnostics: {
-                """
-                @TypeErased
+            } expansion: {
+                #"""
                 protocol Protocol {
-                    @DefaultValue(1) static var variable: Any { get set }
-                    ┬───────────────
-                    ╰─ 🛑 This default doesn't support the use of set requirement
+                    static var variable: Any { get set }
+
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
-                """
+
+                struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
+                    var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                    static var variable: Any {
+                        get {
+                            __implicitCast(1)
+                        }
+                        set {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                }
+                """#
             }
         }
 
-        @Test func `Static variables with default type`() {
+        @Test(.tags(.static, .modifiers, .default))
+        func `Static variables with varying modifiers with default type`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultType<Type> static var variable: Any { get }
-                    @DefaultType<Type> static var variable: Any { get set }
-                    @DefaultType<Type> static var variable: Any { get async }
-                    @DefaultType<Type> static var variable: Any { get throws }
-                    @DefaultType<Type> static var variable: Any { get async throws }
-                    @DefaultType<Type> static var variable: Any { get throws(any Error) }
-                    @DefaultType<Type> static var variable: Any { get throws(URLError) }
-                    @DefaultType<Type> static var variable: Any { get throws(Never) }
+                    @Default(.type(Type.self)) static var variable: Any { get }
+                    @Default(.type(Type.self)) static var variable: Any { get async }
+                    @Default(.type(Type.self)) static var variable: Any { get throws }
+                    @Default(.type(Type.self)) static var variable: Any { get async throws }
+                    @Default(.type(Type.self)) static var variable: Any { get throws(any Error) }
+                    @Default(.type(Type.self)) static var variable: Any { get throws(URLError) }
+                    @Default(.type(Type.self)) static var variable: Any { get throws(Never) }
                 }
                 """
             } expansion: {
                 """
                 protocol Protocol {
                     static var variable: Any { get }
-                    static var variable: Any { get set }
                     static var variable: Any { get async }
                     static var variable: Any { get throws }
                     static var variable: Any { get async throws }
                     static var variable: Any { get throws(any Error) }
                     static var variable: Any { get throws(URLError) }
                     static var variable: Any { get throws(Never) }
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -443,6 +663,70 @@ struct `Macro Tests` {
                         get {
                             __implicitCast(Type.variable)
                         }
+                    }
+                    static var variable: Any {
+                        get async {
+                            __implicitCast(Type.variable)
+                        }
+                    }
+                    static var variable: Any {
+                        get throws {
+                            __implicitCast(Type.variable)
+                        }
+                    }
+                    static var variable: Any {
+                        get async throws {
+                            __implicitCast(Type.variable)
+                        }
+                    }
+                    static var variable: Any {
+                        get throws(any Error) {
+                            __implicitCast(Type.variable)
+                        }
+                    }
+                    static var variable: Any {
+                        get throws(URLError) {
+                            __implicitCast(Type.variable)
+                        }
+                    }
+                    static var variable: Any {
+                        get throws(Never) {
+                            __implicitCast(Type.variable)
+                        }
+                    }
+                }
+                """
+            }
+        }
+
+        @Test(.tags(.static, .default))
+        func `Static variables with default type with setter`() {
+            assertMacro {
+                """
+                @TypeErased
+                protocol Protocol {
+                    @Default(.type(Type.self)) static var variable: Any { get set }
+                }
+                """
+            } expansion: {
+                """
+                protocol Protocol {
+                    static var variable: Any { get set }
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
+                }
+
+                struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
+                    var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    init(erasing: any Protocol) {
+                        self.base = erasing
                     }
                     static var variable: Any {
                         get {
@@ -452,167 +736,53 @@ struct `Macro Tests` {
                             Type.variable = __implicitCast(newValue)
                         }
                     }
-                    static var variable: Any {
-                        get async {
-                            __implicitCast(Type.variable)
-                        }
-                    }
-                    static var variable: Any {
-                        get throws {
-                            __implicitCast(Type.variable)
-                        }
-                    }
-                    static var variable: Any {
-                        get async throws {
-                            __implicitCast(Type.variable)
-                        }
-                    }
-                    static var variable: Any {
-                        get throws(any Error) {
-                            __implicitCast(Type.variable)
-                        }
-                    }
-                    static var variable: Any {
-                        get throws(URLError) {
-                            __implicitCast(Type.variable)
-                        }
-                    }
-                    static var variable: Any {
-                        get throws(Never) {
-                            __implicitCast(Type.variable)
-                        }
-                    }
                 }
                 """
             }
         }
 
-        @Test func `Static variables without setter with external default`() {
+        @Test(.tags(.static, .default))
+        func `Static variables with external default`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultExternal(impl1) static var variable: Any { get }
-                    @DefaultExternal(impl1) static var variable: Any { get async }
-                    @DefaultExternal(impl1) static var variable: Any { get throws }
-                    @DefaultExternal(impl1) static var variable: Any { get async throws }
-                    @DefaultExternal(impl1) static var variable: Any { get throws(any Error) }
-                    @DefaultExternal(impl1) static var variable: Any { get throws(URLError) }
-                    @DefaultExternal(impl1) static var variable: Any { get throws(Never) }
+                    @Default(.external) static var variable: Any { get }
                 }
                 """
             } expansion: {
                 """
                 protocol Protocol {
-                    @DefaultExternal(impl1) static var variable: Any { get }
-                    @DefaultExternal(impl1) static var variable: Any { get async }
-                    @DefaultExternal(impl1) static var variable: Any { get throws }
-                    @DefaultExternal(impl1) static var variable: Any { get async throws }
-                    @DefaultExternal(impl1) static var variable: Any { get throws(any Error) }
-                    @DefaultExternal(impl1) static var variable: Any { get throws(URLError) }
-                    @DefaultExternal(impl1) static var variable: Any { get throws(Never) }
+                    static var variable: Any { get }
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
-                    }
-                    static var variable: Any {
-                        get {
-                            __implicitCast(impl1())
-                        }
-                    }
-                    static var variable: Any {
-                        get async {
-                            await __implicitCast(impl1())
-                        }
-                    }
-                    static var variable: Any {
-                        get throws {
-                            try __implicitCast(impl1())
-                        }
-                    }
-                    static var variable: Any {
-                        get async throws {
-                            try await __implicitCast(impl1())
-                        }
-                    }
-                    static var variable: Any {
-                        get throws(any Error) {
-                            try __implicitCast(impl1())
-                        }
-                    }
-                    static var variable: Any {
-                        get throws(URLError) {
-                            try __implicitCast(impl1())
-                        }
-                    }
-                    static var variable: Any {
-                        get throws(Never) {
-                            try __implicitCast(impl1())
-                        }
                     }
                 }
                 """
             }
         }
 
-        @Test func `Static variables with setter with external default`() {
+        @Test(.tags(.static, .default))
+        func `Static variables with no default`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultExternal(impl1) static var variable: Any { get set }
-                    @DefaultExternal(impl1, impl2) static var variable: Any { get set }
-                }
-                """
-            } expansion: {
-                #"""
-                protocol Protocol {
-                    @DefaultExternal(impl1) static var variable: Any { get set }
-                    @DefaultExternal(impl1, impl2) static var variable: Any { get set }
-                }
-
-                struct AnyProtocol: Protocol, TypeEraser {
-                    var base: any Protocol
-                    init(_ erasing: some Protocol) {
-                        self.base = erasing
-                    }
-                    init(erasing: any Protocol) {
-                        self.base = erasing
-                    }
-                    static var variable: Any {
-                        get {
-                            __implicitCast(impl1())
-                        }
-                        set {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static var variable: Any {
-                        get {
-                            __implicitCast(impl1())
-                        }
-                        set {
-                            impl2(newValue)
-                        }
-                    }
-                }
-                """#
-            }
-        }
-
-        @Test func `Static variables with no default`() {
-            assertMacro {
-                """
-                @TypeErased
-                protocol Protocol {
-                    @DefaultNone static var variable: Any { get }
-                    @DefaultNone static var variable: Any { get set }
+                    @Default(.error) static var variable: Any { get }
+                    @Default(.error) static var variable: Any { get set }
                 }
                 """
             } expansion: {
@@ -620,13 +790,19 @@ struct `Macro Tests` {
                 protocol Protocol {
                     static var variable: Any { get }
                     static var variable: Any { get set }
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -641,6 +817,142 @@ struct `Macro Tests` {
                         }
                         set {
                             fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                }
+                """#
+            }
+        }
+
+        @Test func `Static variables with exportStaticToObjectLevel flag`() {
+            assertMacro {
+                """
+                @TypeErased(options: .exportStaticToObjectLevel)
+                protocol Protocol {
+                    @Default(.error) static var variable: Any { get }
+                    @Default(.error) static var variable: Any { get set }
+                    @Default(.error) static var variable: Any { get async }
+                    @Default(.error) static var variable: Any { get throws }
+                    @Default(.error) static var variable: Any { get async throws }
+                    @Default(.error) static var variable: Any { get throws(any Error) }
+                    @Default(.error) static var variable: Any { get throws(SomeError) }
+                    @Default(.error) static var variable: Any { get throws(Never) }
+                }
+                """
+            } expansion: {
+                #"""
+                protocol Protocol {
+                    static var variable: Any { get }
+                    static var variable: Any { get set }
+                    static var variable: Any { get async }
+                    static var variable: Any { get throws }
+                    static var variable: Any { get async throws }
+                    static var variable: Any { get throws(any Error) }
+                    static var variable: Any { get throws(SomeError) }
+                    static var variable: Any { get throws(Never) }
+
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
+                }
+
+                struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
+                    var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                    static var variable: Any {
+                        get {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                    static var variable: Any {
+                        get {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                        set {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                    static var variable: Any {
+                        get async {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                    static var variable: Any {
+                        get throws {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                    static var variable: Any {
+                        get async throws {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                    static var variable: Any {
+                        get throws(any Error) {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                    static var variable: Any {
+                        get throws(SomeError) {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                    static var variable: Any {
+                        get throws(Never) {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                }
+
+                extension Protocol {
+                    var variable: Any {
+                        get {
+                            __implicitCast(Self.variable)
+                        }
+                    }
+                    var variable: Any {
+                        get {
+                            __implicitCast(Self.variable)
+                        }
+                        set {
+                            Self.variable = __implicitCast(newValue)
+                        }
+                    }
+                    var variable: Any {
+                        get async {
+                            await __implicitCast(Self.variable)
+                        }
+                    }
+                    var variable: Any {
+                        get throws {
+                            try __implicitCast(Self.variable)
+                        }
+                    }
+                    var variable: Any {
+                        get async throws {
+                            try await __implicitCast(Self.variable)
+                        }
+                    }
+                    var variable: Any {
+                        get throws(any Error) {
+                            try __implicitCast(Self.variable)
+                        }
+                    }
+                    var variable: Any {
+                        get throws(SomeError) {
+                            try __implicitCast(Self.variable)
+                        }
+                    }
+                    var variable: Any {
+                        get throws(Never) {
+                            try __implicitCast(Self.variable)
                         }
                     }
                 }
@@ -651,7 +963,8 @@ struct `Macro Tests` {
 
     @Suite
     struct `Function Tests` {
-        @Test func `Standard functions with varying parameter and input labels`() {
+        @Test(.tags(.parameters))
+        func `Standard functions with varying parameter and input labels`() {
             assertMacro {
                 """
                 @TypeErased
@@ -675,13 +988,19 @@ struct `Macro Tests` {
                     func function(_ input: Any)
                     func function(label _: Any)
                     func function(_ _: Any)
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -767,7 +1086,8 @@ struct `Macro Tests` {
             }
         }
 
-        @Test func `Standard functions with varying modifiers`() {
+        @Test(.tags(.modifiers))
+        func `Standard functions with varying modifiers`() {
             assertMacro {
                 """
                 @TypeErased
@@ -789,13 +1109,19 @@ struct `Macro Tests` {
                     func function() throws(any Error)
                     func function() throws(SomeError)
                     func function() throws(Never)
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -886,37 +1212,170 @@ struct `Macro Tests` {
             }
         }
 
-        @Test func `Standard functions with default specifiers`() {
+        @Test(.tags(.default))
+        func `Standard functions with default specifiers`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultExternal(impl) func function() -> Any
-                    @DefaultType<Type> func function() -> Any
-                    @DefaultValue(1) func function() -> Any
-                    @DefaultNone func function() -> Any
+                    @Default(.external) func function() -> Any
+                    @Default(.type(Type.self)) func function() -> Any
+                    @Default(.value(1)) func function() -> Any
+                    @Default(.error) func function() -> Any
                 }
                 """
             } diagnostics: {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultExternal(impl) func function() -> Any
-                    @DefaultType<Type> func function() -> Any
-                    ┬─────────────────
+                    @Default(.external) func function() -> Any
+                    ┬──────────────────
                     ╰─ 🛑 Only static requirements can have a default
-                    @DefaultValue(1) func function() -> Any
+                    @Default(.type(Type.self)) func function() -> Any
+                    ┬─────────────────────────
+                    ╰─ 🛑 Only static requirements can have a default
+                    @Default(.value(1)) func function() -> Any
+                    ┬──────────────────
+                    ╰─ 🛑 Only static requirements can have a default
+                    @Default(.error) func function() -> Any
                     ┬───────────────
-                    ╰─ 🛑 Only static requirements can have a default
-                    @DefaultNone func function() -> Any
-                    ┬───────────
                     ╰─ 🛑 Only static requirements can have a default
                 }
                 """
             }
         }
 
-        @Test func `Static non-marked function`() {
+        @Test(.tags(.option, .parameters))
+        func `Standard functions with assureNoAssociates flag with varying parameter and input labels`() {
+            assertMacro {
+                """
+                @TypeErased(options: .assureNoAssociates)
+                protocol Protocol {
+                    func function()
+                    func function(label: Any)
+                    func function(_: Any)
+                    func function(label input: Any)
+                    func function(_ input: Any)
+                    func function(label _: Any)
+                    func function(_ _: Any)
+                }
+                """
+            } expansion: {
+                """
+                protocol Protocol {
+                    func function()
+                    func function(label: Any)
+                    func function(_: Any)
+                    func function(label input: Any)
+                    func function(_ input: Any)
+                    func function(label _: Any)
+                    func function(_ _: Any)
+
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
+                }
+
+                struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
+                    var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                    func function() {
+                        base.function()
+                    }
+                    func function(label: Any) {
+                        base.function(label: label)
+                    }
+                    func function(_ param0: Any) {
+                        base.function(param0)
+                    }
+                    func function(label input: Any) {
+                        base.function(label: input)
+                    }
+                    func function(_ input: Any) {
+                        base.function(input)
+                    }
+                    func function(label _: Any) {
+                        base.function(label: label)
+                    }
+                    func function(_ param0: Any) {
+                        base.function(param0)
+                    }
+                }
+                """
+            }
+        }
+
+        @Test(.tags(.option, .modifiers))
+        func `Standard functions with assureNoAssociates flag with varying modifiers`() {
+            assertMacro {
+                """
+                @TypeErased(options: .assureNoAssociates)
+                protocol Protocol {
+                    func function() async
+                    func function() throws
+                    func function() async throws
+                    func function() throws(any Error)
+                    func function() throws(SomeError)
+                    func function() throws(Never)
+                }
+                """
+            } expansion: {
+                """
+                protocol Protocol {
+                    func function() async
+                    func function() throws
+                    func function() async throws
+                    func function() throws(any Error)
+                    func function() throws(SomeError)
+                    func function() throws(Never)
+
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
+                }
+
+                struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
+                    var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                    func function() async {
+                        await base.function()
+                    }
+                    func function() throws {
+                        try base.function()
+                    }
+                    func function() async throws {
+                        try await base.function()
+                    }
+                    func function() throws(any Error) {
+                        try base.function()
+                    }
+                    func function() throws(SomeError) {
+                        try base.function()
+                    }
+                    func function() throws(Never) {
+                        base.function()
+                    }
+                }
+                """
+            }
+        }
+
+        @Test(.tags(.static))
+        func `Static non-marked function`() {
             assertMacro {
                 """
                 @TypeErased
@@ -936,53 +1395,57 @@ struct `Macro Tests` {
             }
         }
 
-        @Test func `Static function with default value`() {
+        @Test(.tags(.static, .default))
+        func `Static function with default value`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultValue(1) static func function() -> Any
+                    @Default(.value(1)) static func function() -> Any
                 }
                 """
             } expansion: {
                 """
                 protocol Protocol {
                     static func function() -> Any
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
                     static func function() -> Any {
-                        1
+                        __implicitCast(1)
                     }
                 }
                 """
             }
         }
 
-        @Test func `Static function with default type with varying parameter and input labels`() {
+        @Test(.tags(.static, .parameters, .default))
+        func `Static function with default type with varying parameter and input labels`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultType<Type> static func function()
-                    @DefaultType<Type> static func function(label: Any)
-                    @DefaultType<Type> static func function(_: Any)
-                    @DefaultType<Type> static func function(label input: Any)
-                    @DefaultType<Type> static func function(_ input: Any)
-                    @DefaultType<Type> static func function(label _: Any)
-                    @DefaultType<Type> static func function(_ _: Any)
+                    @Default(.type(Type.self)) static func function()
+                    @Default(.type(Type.self)) static func function(label: Any)
+                    @Default(.type(Type.self)) static func function(_: Any)
+                    @Default(.type(Type.self)) static func function(label input: Any)
+                    @Default(.type(Type.self)) static func function(_ input: Any)
+                    @Default(.type(Type.self)) static func function(label _: Any)
+                    @Default(.type(Type.self)) static func function(_ _: Any)
                 }
-                """
-            } diagnostics: {
-                """
-
                 """
             } expansion: {
                 """
@@ -994,13 +1457,19 @@ struct `Macro Tests` {
                     static func function(_ input: Any)
                     static func function(label _: Any)
                     static func function(_ _: Any)
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -1030,22 +1499,19 @@ struct `Macro Tests` {
             }
         }
 
-        @Test func `Static function with default type with varying modifiers`() {
+        @Test(.tags(.static, .modifiers, .default))
+        func `Static function with default type with varying modifiers`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultType<Type> static func function() async
-                    @DefaultType<Type> static func function() throws
-                    @DefaultType<Type> static func function() async throws
-                    @DefaultType<Type> static func function() throws(any Error)
-                    @DefaultType<Type> static func function() throws(SomeError)
-                    @DefaultType<Type> static func function() throws(Never)
+                    @Default(.type(Type.self)) static func function() async
+                    @Default(.type(Type.self)) static func function() throws
+                    @Default(.type(Type.self)) static func function() async throws
+                    @Default(.type(Type.self)) static func function() throws(any Error)
+                    @Default(.type(Type.self)) static func function() throws(SomeError)
+                    @Default(.type(Type.self)) static func function() throws(Never)
                 }
-                """
-            } diagnostics: {
-                """
-
                 """
             } expansion: {
                 """
@@ -1056,13 +1522,19 @@ struct `Macro Tests` {
                     static func function() throws(any Error)
                     static func function() throws(SomeError)
                     static func function() throws(Never)
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -1089,140 +1561,66 @@ struct `Macro Tests` {
             }
         }
 
-        @Test func `Static function with external default with varying parameter and input labels`() {
+        @Test(.tags(.static, .default))
+        func `Static function with external default`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultExternal(impl) static func function()
-                    @DefaultExternal(impl) static func function(label: Any)
-                    @DefaultExternal(impl) static func function(_: Any)
-                    @DefaultExternal(impl) static func function(label input: Any)
-                    @DefaultExternal(impl) static func function(_ input: Any)
-                    @DefaultExternal(impl) static func function(label _: Any)
-                    @DefaultExternal(impl) static func function(_ _: Any)
+                    @Default(.external) static func function()
                 }
                 """
             } expansion: {
                 """
                 protocol Protocol {
-                    @DefaultExternal(impl) static func function()
-                    @DefaultExternal(impl) static func function(label: Any)
-                    @DefaultExternal(impl) static func function(_: Any)
-                    @DefaultExternal(impl) static func function(label input: Any)
-                    @DefaultExternal(impl) static func function(_ input: Any)
-                    @DefaultExternal(impl) static func function(label _: Any)
-                    @DefaultExternal(impl) static func function(_ _: Any)
+                    static func function()
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
-                    }
-                    static func function() {
-                        __implicitCast(impl())
-                    }
-                    static func function(label: Any) {
-                        __implicitCast(impl(label: label))
-                    }
-                    static func function(_ param0: Any) {
-                        __implicitCast(impl(param0))
-                    }
-                    static func function(label input: Any) {
-                        __implicitCast(impl(label: input))
-                    }
-                    static func function(_ input: Any) {
-                        __implicitCast(impl(input))
-                    }
-                    static func function(label _: Any) {
-                        __implicitCast(impl(label: label))
-                    }
-                    static func function(_ param0: Any) {
-                        __implicitCast(impl(param0))
                     }
                 }
                 """
             }
         }
 
-        @Test func `Static function with external default with varying modifiers`() {
+        @Test(.tags(.static, .default))
+        func `Static function with no default`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultExternal(impl) static func function() async
-                    @DefaultExternal(impl) static func function() throws
-                    @DefaultExternal(impl) static func function() async throws
-                    @DefaultExternal(impl) static func function() throws(any Error)
-                    @DefaultExternal(impl) static func function() throws(SomeError)
-                    @DefaultExternal(impl) static func function() throws(Never)
-                }
-                """
-            } expansion: {
-                """
-                protocol Protocol {
-                    @DefaultExternal(impl) static func function() async
-                    @DefaultExternal(impl) static func function() throws
-                    @DefaultExternal(impl) static func function() async throws
-                    @DefaultExternal(impl) static func function() throws(any Error)
-                    @DefaultExternal(impl) static func function() throws(SomeError)
-                    @DefaultExternal(impl) static func function() throws(Never)
-                }
-
-                struct AnyProtocol: Protocol, TypeEraser {
-                    var base: any Protocol
-                    init(_ erasing: some Protocol) {
-                        self.base = erasing
-                    }
-                    init(erasing: any Protocol) {
-                        self.base = erasing
-                    }
-                    static func function() async {
-                        await __implicitCast(impl())
-                    }
-                    static func function() throws {
-                        try __implicitCast(impl())
-                    }
-                    static func function() async throws {
-                        try await __implicitCast(impl())
-                    }
-                    static func function() throws(any Error) {
-                        try __implicitCast(impl())
-                    }
-                    static func function() throws(SomeError) {
-                        try __implicitCast(impl())
-                    }
-                    static func function() throws(Never) {
-                        __implicitCast(impl())
-                    }
-                }
-                """
-            }
-        }
-
-        @Test func `Static function with no default`() {
-            assertMacro {
-                """
-                @TypeErased
-                protocol Protocol {
-                    @DefaultNone static func function()
+                    @Default(.error) static func function()
                 }
                 """
             } expansion: {
                 #"""
                 protocol Protocol {
                     static func function()
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -1233,11 +1631,186 @@ struct `Macro Tests` {
                 """#
             }
         }
+
+        @Test(.tags(.static, .option, .modifiers))
+        func `Static function with exportStaticToObjectLevel flag with varying modifiers`() {
+            assertMacro {
+                """
+                @TypeErased(options: .exportStaticToObjectLevel)
+                protocol Protocol {
+                    @Default(.error) static func function() async
+                    @Default(.error) static func function() throws
+                    @Default(.error) static func function() async throws
+                    @Default(.error) static func function() throws(any Error)
+                    @Default(.error) static func function() throws(SomeError)
+                    @Default(.error) static func function() throws(Never)
+                }
+                """
+            } expansion: {
+                #"""
+                protocol Protocol {
+                    static func function() async
+                    static func function() throws
+                    static func function() async throws
+                    static func function() throws(any Error)
+                    static func function() throws(SomeError)
+                    static func function() throws(Never)
+
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
+                }
+
+                struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
+                    var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                    static func function() async {
+                        fatalError("Tried to access static member \(#function) from type eraser")
+                    }
+                    static func function() throws {
+                        fatalError("Tried to access static member \(#function) from type eraser")
+                    }
+                    static func function() async throws {
+                        fatalError("Tried to access static member \(#function) from type eraser")
+                    }
+                    static func function() throws(any Error) {
+                        fatalError("Tried to access static member \(#function) from type eraser")
+                    }
+                    static func function() throws(SomeError) {
+                        fatalError("Tried to access static member \(#function) from type eraser")
+                    }
+                    static func function() throws(Never) {
+                        fatalError("Tried to access static member \(#function) from type eraser")
+                    }
+                }
+
+                extension Protocol {
+                    func function() async {
+                        await __implicitCast(Self.function())
+                    }
+                    func function() throws {
+                        try __implicitCast(Self.function())
+                    }
+                    func function() async throws {
+                        try await __implicitCast(Self.function())
+                    }
+                    func function() throws(any Error) {
+                        try __implicitCast(Self.function())
+                    }
+                    func function() throws(SomeError) {
+                        try __implicitCast(Self.function())
+                    }
+                    func function() throws(Never) {
+                        __implicitCast(Self.function())
+                    }
+                }
+                """#
+            }
+        }
+
+        @Test(.tags(.static, .option, .parameters))
+        func `Static function with exportStaticToObjectLevel flag with varying parameter and input labels`() {
+            assertMacro {
+                """
+                @TypeErased(options: .exportStaticToObjectLevel)
+                protocol Protocol {
+                    @Default(.error) static func function()
+                    @Default(.error) static func function(label: Any)
+                    @Default(.error) static func function(_: Any)
+                    @Default(.error) static func function(label input: Any)
+                    @Default(.error) static func function(_ input: Any)
+                    @Default(.error) static func function(label _: Any)
+                    @Default(.error) static func function(_ _: Any)
+                }
+                """
+            } expansion: {
+                #"""
+                protocol Protocol {
+                    static func function()
+                    static func function(label: Any)
+                    static func function(_: Any)
+                    static func function(label input: Any)
+                    static func function(_ input: Any)
+                    static func function(label _: Any)
+                    static func function(_ _: Any)
+
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
+                }
+
+                struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
+                    var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                    static func function() {
+                        fatalError("Tried to access static member \(#function) from type eraser")
+                    }
+                    static func function(label: Any) {
+                        fatalError("Tried to access static member \(#function) from type eraser")
+                    }
+                    static func function(_ param0: Any) {
+                        fatalError("Tried to access static member \(#function) from type eraser")
+                    }
+                    static func function(label input: Any) {
+                        fatalError("Tried to access static member \(#function) from type eraser")
+                    }
+                    static func function(_ input: Any) {
+                        fatalError("Tried to access static member \(#function) from type eraser")
+                    }
+                    static func function(label _: Any) {
+                        fatalError("Tried to access static member \(#function) from type eraser")
+                    }
+                    static func function(_ param0: Any) {
+                        fatalError("Tried to access static member \(#function) from type eraser")
+                    }
+                }
+
+                extension Protocol {
+                    func function() {
+                        __implicitCast(Self.function())
+                    }
+                    func function(label: Any) {
+                        __implicitCast(Self.function(label: __implicitCast(label)))
+                    }
+                    func function(_ param0: Any) {
+                        __implicitCast(Self.function(__implicitCast(param0)))
+                    }
+                    func function(label input: Any) {
+                        __implicitCast(Self.function(label: __implicitCast(input)))
+                    }
+                    func function(_ input: Any) {
+                        __implicitCast(Self.function(__implicitCast(input)))
+                    }
+                    func function(label _: Any) {
+                        __implicitCast(Self.function(label: __implicitCast(label)))
+                    }
+                    func function(_ param0: Any) {
+                        __implicitCast(Self.function(__implicitCast(param0)))
+                    }
+                }
+                """#
+            }
+        }
     }
 
     @Suite
     struct `Subscript Tests` {
-        @Test func `Standard subscripts with varying parameter and input labels without setters`() {
+        @Test(.tags(.parameters))
+        func `Standard subscripts with varying parameter and input labels without setters`() {
             assertMacro {
                 """
                 @TypeErased
@@ -1261,13 +1834,19 @@ struct `Macro Tests` {
                     subscript(_ input: Any) -> Any { get }
                     subscript(label _: Any) -> Any { get }
                     subscript(_ _: Any) -> Any { get }
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -1367,7 +1946,8 @@ struct `Macro Tests` {
             }
         }
 
-        @Test func `Standard subscripts with varying parameter and input labels with setters`() {
+        @Test(.tags(.parameters))
+        func `Standard subscripts with varying parameter and input labels with setters`() {
             assertMacro {
                 """
                 @TypeErased
@@ -1391,13 +1971,19 @@ struct `Macro Tests` {
                     subscript(_ input: Any) -> Any { get set }
                     subscript(label _: Any) -> Any { get set }
                     subscript(_ _: Any) -> Any { get set }
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -1595,7 +2181,8 @@ struct `Macro Tests` {
             }
         }
 
-        @Test func `Standard subscripts with varying modifiers`() {
+        @Test(.tags(.modifiers))
+        func `Standard subscripts with varying modifiers`() {
             assertMacro {
                 """
                 @TypeErased
@@ -1617,13 +2204,19 @@ struct `Macro Tests` {
                     subscript() -> Any { get throws(any Error) }
                     subscript() -> Any { get throws(SomeError) }
                     subscript() -> Any { get throws(Never) }
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -1726,37 +2319,298 @@ struct `Macro Tests` {
             }
         }
 
-        @Test func `Standard subscripts with default specifiers`() {
+        @Test(.tags(.default))
+        func `Standard subscripts with default specifiers`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultExternal(impl1) subscript() -> Any { get }
-                    @DefaultType<Type> subscript() -> Any { get }
-                    @DefaultValue(1) subscript() -> Any { get }
-                    @DefaultNone subscript() -> Any { get }
+                    @Default(.external) subscript() -> Any { get }
+                    @Default(.type(Type.self)) subscript() -> Any { get }
+                    @Default(.value(1)) subscript() -> Any { get }
+                    @Default(.error) subscript() -> Any { get }
                 }
                 """
             } diagnostics: {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultExternal(impl1) subscript() -> Any { get }
-                    @DefaultType<Type> subscript() -> Any { get }
-                    ┬─────────────────
+                    @Default(.external) subscript() -> Any { get }
+                    ┬──────────────────
                     ╰─ 🛑 Only static requirements can have a default
-                    @DefaultValue(1) subscript() -> Any { get }
+                    @Default(.type(Type.self)) subscript() -> Any { get }
+                    ┬─────────────────────────
+                    ╰─ 🛑 Only static requirements can have a default
+                    @Default(.value(1)) subscript() -> Any { get }
+                    ┬──────────────────
+                    ╰─ 🛑 Only static requirements can have a default
+                    @Default(.error) subscript() -> Any { get }
                     ┬───────────────
-                    ╰─ 🛑 Only static requirements can have a default
-                    @DefaultNone subscript() -> Any { get }
-                    ┬───────────
                     ╰─ 🛑 Only static requirements can have a default
                 }
                 """
             }
         }
 
-        @Test func `Static non-marked subscript`() {
+        @Test(.tags(.option, .parameters))
+        func `Standard subscripts with assureNoAssociates flag with varying parameter and input labels without setters`() {
+            assertMacro {
+                """
+                @TypeErased(options: .assureNoAssociates)
+                protocol Protocol {
+                    subscript() -> Any { get }
+                    subscript(label: Any) -> Any { get }
+                    subscript(_: Any) -> Any { get }
+                    subscript(label input: Any) -> Any { get }
+                    subscript(_ input: Any) -> Any { get }
+                    subscript(label _: Any) -> Any { get }
+                    subscript(_ _: Any) -> Any { get }
+                }
+                """
+            } expansion: {
+                """
+                protocol Protocol {
+                    subscript() -> Any { get }
+                    subscript(label: Any) -> Any { get }
+                    subscript(_: Any) -> Any { get }
+                    subscript(label input: Any) -> Any { get }
+                    subscript(_ input: Any) -> Any { get }
+                    subscript(label _: Any) -> Any { get }
+                    subscript(_ _: Any) -> Any { get }
+
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
+                }
+
+                struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
+                    var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                    subscript() -> Any {
+                        get {
+                            base[]
+                        }
+                    }
+                    subscript(label: Any) -> Any {
+                        get {
+                            base[label]
+                        }
+                    }
+                    subscript(_ param0: Any) -> Any {
+                        get {
+                            base[param0]
+                        }
+                    }
+                    subscript(label input: Any) -> Any {
+                        get {
+                            base[label: input]
+                        }
+                    }
+                    subscript(_ input: Any) -> Any {
+                        get {
+                            base[input]
+                        }
+                    }
+                    subscript(label param0: Any) -> Any {
+                        get {
+                            base[label: param0]
+                        }
+                    }
+                    subscript(_ param0: Any) -> Any {
+                        get {
+                            base[param0]
+                        }
+                    }
+                }
+                """
+            }
+        }
+
+        @Test(.tags(.option, .parameters))
+        func `Standard subscripts with assureNoAssociates flag with varying parameter and input labels with setters`() {
+            assertMacro {
+                """
+                @TypeErased(options: .assureNoAssociates)
+                protocol Protocol {
+                    subscript() -> Any { get set }
+                    subscript(label: Any) -> Any { get set }
+                    subscript(_: Any) -> Any { get set }
+                    subscript(label input: Any) -> Any { get set }
+                    subscript(_ input: Any) -> Any { get set }
+                    subscript(label _: Any) -> Any { get set }
+                    subscript(_ _: Any) -> Any { get set }
+                }
+                """
+            } expansion: {
+                """
+                protocol Protocol {
+                    subscript() -> Any { get set }
+                    subscript(label: Any) -> Any { get set }
+                    subscript(_: Any) -> Any { get set }
+                    subscript(label input: Any) -> Any { get set }
+                    subscript(_ input: Any) -> Any { get set }
+                    subscript(label _: Any) -> Any { get set }
+                    subscript(_ _: Any) -> Any { get set }
+
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
+                }
+
+                struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
+                    var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                    subscript() -> Any {
+                        get {
+                            base[]
+                        }
+                        set {
+                            base[] = newValue
+                        }
+                    }
+                    subscript(label: Any) -> Any {
+                        get {
+                            base[label]
+                        }
+                        set {
+                            base[label] = newValue
+                        }
+                    }
+                    subscript(_ param0: Any) -> Any {
+                        get {
+                            base[param0]
+                        }
+                        set {
+                            base[param0] = newValue
+                        }
+                    }
+                    subscript(label input: Any) -> Any {
+                        get {
+                            base[label: input]
+                        }
+                        set {
+                            base[label: input] = newValue
+                        }
+                    }
+                    subscript(_ input: Any) -> Any {
+                        get {
+                            base[input]
+                        }
+                        set {
+                            base[input] = newValue
+                        }
+                    }
+                    subscript(label param0: Any) -> Any {
+                        get {
+                            base[label: param0]
+                        }
+                        set {
+                            base[label: param0] = newValue
+                        }
+                    }
+                    subscript(_ param0: Any) -> Any {
+                        get {
+                            base[param0]
+                        }
+                        set {
+                            base[param0] = newValue
+                        }
+                    }
+                }
+                """
+            }
+        }
+
+        @Test(.tags(.static, .modifiers))
+        func `Standard subscripts with assureNoAssociates flag with varying modifiers`() {
+            assertMacro {
+                """
+                @TypeErased(options: .assureNoAssociates)
+                protocol Protocol {
+                    subscript() -> Any { get async }
+                    subscript() -> Any { get throws }
+                    subscript() -> Any { get async throws }
+                    subscript() -> Any { get throws(any Error) }
+                    subscript() -> Any { get throws(SomeError) }
+                    subscript() -> Any { get throws(Never) }
+                }
+                """
+            } expansion: {
+                """
+                protocol Protocol {
+                    subscript() -> Any { get async }
+                    subscript() -> Any { get throws }
+                    subscript() -> Any { get async throws }
+                    subscript() -> Any { get throws(any Error) }
+                    subscript() -> Any { get throws(SomeError) }
+                    subscript() -> Any { get throws(Never) }
+
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
+                }
+
+                struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
+                    var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                    subscript() -> Any {
+                        get async {
+                            await base[]
+                        }
+                    }
+                    subscript() -> Any {
+                        get throws {
+                            try base[]
+                        }
+                    }
+                    subscript() -> Any {
+                        get async throws {
+                            try await base[]
+                        }
+                    }
+                    subscript() -> Any {
+                        get throws(any Error) {
+                            try base[]
+                        }
+                    }
+                    subscript() -> Any {
+                        get throws(SomeError) {
+                            try base[]
+                        }
+                    }
+                    subscript() -> Any {
+                        get throws(Never) {
+                            try base[]
+                        }
+                    }
+                }
+                """
+            }
+        }
+
+        @Test(.tags(.static))
+        func `Static non-marked subscript`() {
             assertMacro {
                 """
                 @TypeErased
@@ -1776,25 +2630,32 @@ struct `Macro Tests` {
             }
         }
 
-        @Test func `Static subscript with default value without setter`() {
+        @Test(.tags(.static, .default))
+        func `Static subscript with default value without setter`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultValue(1) static subscript() -> Any { get }
+                    @Default(.value(1)) static subscript() -> Any { get }
                 }
                 """
             } expansion: {
                 """
                 protocol Protocol {
                     static subscript() -> Any { get }
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -1808,38 +2669,61 @@ struct `Macro Tests` {
             }
         }
 
-        @Test func `Static subscript with default value with setter`() {
+        @Test(.tags(.static, .default))
+        func `Static subscript with default value with setter`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultValue(1) static subscript() -> Any { get set }
+                    @Default(.value(1)) static subscript() -> Any { get set }
                 }
                 """
-            } diagnostics: {
-                """
-                @TypeErased
+            } expansion: {
+                #"""
                 protocol Protocol {
-                    @DefaultValue(1) static subscript() -> Any { get set }
-                    ┬───────────────
-                    ╰─ 🛑 This default doesn't support the use of set requirement
+                    static subscript() -> Any { get set }
+
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
-                """
+
+                struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
+                    var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                    static subscript() -> Any {
+                        get {
+                            __implicitCast(1)
+                        }
+                        set {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                }
+                """#
             }
         }
 
-        @Test func `Static subscript with default type with varying parameter and input labels without setters`() {
+        @Test(.tags(.static, .parameters, .default))
+        func `Static subscript with default type with varying parameter and input labels without setters`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultType<Type> static subscript() -> Any { get }
-                    @DefaultType<Type> static subscript(label: Any) -> Any { get }
-                    @DefaultType<Type> static subscript(_: Any) -> Any { get }
-                    @DefaultType<Type> static subscript(label input: Any) -> Any { get }
-                    @DefaultType<Type> static subscript(_ input: Any) -> Any { get }
-                    @DefaultType<Type> static subscript(label _: Any) -> Any { get }
-                    @DefaultType<Type> static subscript(_ _: Any) -> Any { get }
+                    @Default(.type(Type.self)) static subscript() -> Any { get }
+                    @Default(.type(Type.self)) static subscript(label: Any) -> Any { get }
+                    @Default(.type(Type.self)) static subscript(_: Any) -> Any { get }
+                    @Default(.type(Type.self)) static subscript(label input: Any) -> Any { get }
+                    @Default(.type(Type.self)) static subscript(_ input: Any) -> Any { get }
+                    @Default(.type(Type.self)) static subscript(label _: Any) -> Any { get }
+                    @Default(.type(Type.self)) static subscript(_ _: Any) -> Any { get }
                 }
                 """
             } expansion: {
@@ -1852,13 +2736,19 @@ struct `Macro Tests` {
                     static subscript(_ input: Any) -> Any { get }
                     static subscript(label _: Any) -> Any { get }
                     static subscript(_ _: Any) -> Any { get }
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -1902,18 +2792,19 @@ struct `Macro Tests` {
             }
         }
 
-        @Test func `Static subscript with default type with varying parameter and input labels with setters`() {
+        @Test(.tags(.static, .parameters, .default))
+        func `Static subscript with default type with varying parameter and input labels with setters`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultType<Type> static subscript() -> Any { get set }
-                    @DefaultType<Type> static subscript(label: Any) -> Any { get set }
-                    @DefaultType<Type> static subscript(_: Any) -> Any { get set }
-                    @DefaultType<Type> static subscript(label input: Any) -> Any { get set }
-                    @DefaultType<Type> static subscript(_ input: Any) -> Any { get set }
-                    @DefaultType<Type> static subscript(label _: Any) -> Any { get set }
-                    @DefaultType<Type> static subscript(_ _: Any) -> Any { get set }
+                    @Default(.type(Type.self)) static subscript() -> Any { get set }
+                    @Default(.type(Type.self)) static subscript(label: Any) -> Any { get set }
+                    @Default(.type(Type.self)) static subscript(_: Any) -> Any { get set }
+                    @Default(.type(Type.self)) static subscript(label input: Any) -> Any { get set }
+                    @Default(.type(Type.self)) static subscript(_ input: Any) -> Any { get set }
+                    @Default(.type(Type.self)) static subscript(label _: Any) -> Any { get set }
+                    @Default(.type(Type.self)) static subscript(_ _: Any) -> Any { get set }
                 }
                 """
             } expansion: {
@@ -1926,13 +2817,19 @@ struct `Macro Tests` {
                     static subscript(_ input: Any) -> Any { get set }
                     static subscript(label _: Any) -> Any { get set }
                     static subscript(_ _: Any) -> Any { get set }
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -1997,17 +2894,18 @@ struct `Macro Tests` {
             }
         }
 
-        @Test func `Static subscript with default type with varying modifiers`() {
+        @Test(.tags(.static, .modifiers, .default))
+        func `Static subscript with default type with varying modifiers`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultType<Type> static subscript() -> Any { get async }
-                    @DefaultType<Type> static subscript() -> Any { get throws }
-                    @DefaultType<Type> static subscript() -> Any { get async throws }
-                    @DefaultType<Type> static subscript() -> Any { get throws(any Error) }
-                    @DefaultType<Type> static subscript() -> Any { get throws(SomeError) }
-                    @DefaultType<Type> static subscript() -> Any { get throws(Never) }
+                    @Default(.type(Type.self)) static subscript() -> Any { get async }
+                    @Default(.type(Type.self)) static subscript() -> Any { get throws }
+                    @Default(.type(Type.self)) static subscript() -> Any { get async throws }
+                    @Default(.type(Type.self)) static subscript() -> Any { get throws(any Error) }
+                    @Default(.type(Type.self)) static subscript() -> Any { get throws(SomeError) }
+                    @Default(.type(Type.self)) static subscript() -> Any { get throws(Never) }
                 }
                 """
             } expansion: {
@@ -2019,13 +2917,19 @@ struct `Macro Tests` {
                     static subscript() -> Any { get throws(any Error) }
                     static subscript() -> Any { get throws(SomeError) }
                     static subscript() -> Any { get throws(Never) }
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -2064,334 +2968,79 @@ struct `Macro Tests` {
             }
         }
 
-        @Test func `Static subscript with external default with varying parameter and input labels without setters`() {
+        @Test(.tags(.static, .default))
+        func `Static subscript with external default`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultExternal(impl1) static subscript() -> Any { get }
-                    @DefaultExternal(impl1) static subscript(label: Any) -> Any { get }
-                    @DefaultExternal(impl1) static subscript(_: Any) -> Any { get }
-                    @DefaultExternal(impl1) static subscript(label input: Any) -> Any { get }
-                    @DefaultExternal(impl1) static subscript(_ input: Any) -> Any { get }
-                    @DefaultExternal(impl1) static subscript(label _: Any) -> Any { get }
-                    @DefaultExternal(impl1) static subscript(_ _: Any) -> Any { get }
+                    @Default(.external) static subscript() -> Any { get }
                 }
                 """
             } expansion: {
                 """
                 protocol Protocol {
-                    @DefaultExternal(impl1) static subscript() -> Any { get }
-                    @DefaultExternal(impl1) static subscript(label: Any) -> Any { get }
-                    @DefaultExternal(impl1) static subscript(_: Any) -> Any { get }
-                    @DefaultExternal(impl1) static subscript(label input: Any) -> Any { get }
-                    @DefaultExternal(impl1) static subscript(_ input: Any) -> Any { get }
-                    @DefaultExternal(impl1) static subscript(label _: Any) -> Any { get }
-                    @DefaultExternal(impl1) static subscript(_ _: Any) -> Any { get }
+                    static subscript() -> Any { get }
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
-                    }
-                    static subscript() -> Any {
-                        get {
-                            __implicitCast(impl1())
-                        }
-                    }
-                    static subscript(label: Any) -> Any {
-                        get {
-                            __implicitCast(impl1(label))
-                        }
-                    }
-                    static subscript(_ param0: Any) -> Any {
-                        get {
-                            __implicitCast(impl1(param0))
-                        }
-                    }
-                    static subscript(label input: Any) -> Any {
-                        get {
-                            __implicitCast(impl1(label: input))
-                        }
-                    }
-                    static subscript(_ input: Any) -> Any {
-                        get {
-                            __implicitCast(impl1(input))
-                        }
-                    }
-                    static subscript(label param0: Any) -> Any {
-                        get {
-                            __implicitCast(impl1(label: param0))
-                        }
-                    }
-                    static subscript(_ param0: Any) -> Any {
-                        get {
-                            __implicitCast(impl1(param0))
-                        }
                     }
                 }
                 """
             }
         }
 
-        @Test func `Static subscript with over-parameterized external default with varying parameter and input labels without setters`() {
+        @Test(.tags(.static, .default))
+        func `Static subscripts with no default`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultExternal(impl1, impl2) static subscript() -> Any { get }
-                    @DefaultExternal(impl1, impl2) static subscript(label: Any) -> Any { get }
-                    @DefaultExternal(impl1, impl2) static subscript(_: Any) -> Any { get }
-                    @DefaultExternal(impl1, impl2) static subscript(label input: Any) -> Any { get }
-                    @DefaultExternal(impl1, impl2) static subscript(_ input: Any) -> Any { get }
-                    @DefaultExternal(impl1, impl2) static subscript(label _: Any) -> Any { get }
-                    @DefaultExternal(impl1, impl2) static subscript(_ _: Any) -> Any { get }
-                }
-                """
-            } expansion: {
-                """
-                protocol Protocol {
-                    @DefaultExternal(impl1, impl2) static subscript() -> Any { get }
-                    @DefaultExternal(impl1, impl2) static subscript(label: Any) -> Any { get }
-                    @DefaultExternal(impl1, impl2) static subscript(_: Any) -> Any { get }
-                    @DefaultExternal(impl1, impl2) static subscript(label input: Any) -> Any { get }
-                    @DefaultExternal(impl1, impl2) static subscript(_ input: Any) -> Any { get }
-                    @DefaultExternal(impl1, impl2) static subscript(label _: Any) -> Any { get }
-                    @DefaultExternal(impl1, impl2) static subscript(_ _: Any) -> Any { get }
-                }
-
-                struct AnyProtocol: Protocol, TypeEraser {
-                    var base: any Protocol
-                    init(_ erasing: some Protocol) {
-                        self.base = erasing
-                    }
-                    init(erasing: any Protocol) {
-                        self.base = erasing
-                    }
-                    static subscript() -> Any {
-                        get {
-                            __implicitCast(impl1())
-                        }
-                    }
-                    static subscript(label: Any) -> Any {
-                        get {
-                            __implicitCast(impl1(label))
-                        }
-                    }
-                    static subscript(_ param0: Any) -> Any {
-                        get {
-                            __implicitCast(impl1(param0))
-                        }
-                    }
-                    static subscript(label input: Any) -> Any {
-                        get {
-                            __implicitCast(impl1(label: input))
-                        }
-                    }
-                    static subscript(_ input: Any) -> Any {
-                        get {
-                            __implicitCast(impl1(input))
-                        }
-                    }
-                    static subscript(label param0: Any) -> Any {
-                        get {
-                            __implicitCast(impl1(label: param0))
-                        }
-                    }
-                    static subscript(_ param0: Any) -> Any {
-                        get {
-                            __implicitCast(impl1(param0))
-                        }
-                    }
-                }
-                """
-            }
-        }
-
-        @Test func `Static subscript with default with varying parameter and input labels with setters`() {
-            assertMacro {
-                """
-                @TypeErased
-                protocol Protocol {
-                    @DefaultExternal(impl1, impl2) static subscript() -> Any { get set }
-                    @DefaultExternal(impl1, impl2) static subscript(label: Any) -> Any { get set }
-                    @DefaultExternal(impl1, impl2) static subscript(_: Any) -> Any { get set }
-                    @DefaultExternal(impl1, impl2) static subscript(label input: Any) -> Any { get set }
-                    @DefaultExternal(impl1, impl2) static subscript(_ input: Any) -> Any { get set }
-                    @DefaultExternal(impl1, impl2) static subscript(label _: Any) -> Any { get set }
-                    @DefaultExternal(impl1, impl2) static subscript(_ _: Any) -> Any { get set }
-                }
-                """
-            } expansion: {
-                """
-                protocol Protocol {
-                    @DefaultExternal(impl1, impl2) static subscript() -> Any { get set }
-                    @DefaultExternal(impl1, impl2) static subscript(label: Any) -> Any { get set }
-                    @DefaultExternal(impl1, impl2) static subscript(_: Any) -> Any { get set }
-                    @DefaultExternal(impl1, impl2) static subscript(label input: Any) -> Any { get set }
-                    @DefaultExternal(impl1, impl2) static subscript(_ input: Any) -> Any { get set }
-                    @DefaultExternal(impl1, impl2) static subscript(label _: Any) -> Any { get set }
-                    @DefaultExternal(impl1, impl2) static subscript(_ _: Any) -> Any { get set }
-                }
-
-                struct AnyProtocol: Protocol, TypeEraser {
-                    var base: any Protocol
-                    init(_ erasing: some Protocol) {
-                        self.base = erasing
-                    }
-                    init(erasing: any Protocol) {
-                        self.base = erasing
-                    }
-                    static subscript() -> Any {
-                        get {
-                            __implicitCast(impl1())
-                        }
-                        set {
-                            __implicitCast(impl2(newValue, ))
-                        }
-                    }
-                    static subscript(label: Any) -> Any {
-                        get {
-                            __implicitCast(impl1(label))
-                        }
-                        set {
-                            __implicitCast(impl2(newValue, label))
-                        }
-                    }
-                    static subscript(_ param0: Any) -> Any {
-                        get {
-                            __implicitCast(impl1(param0))
-                        }
-                        set {
-                            __implicitCast(impl2(newValue, param0))
-                        }
-                    }
-                    static subscript(label input: Any) -> Any {
-                        get {
-                            __implicitCast(impl1(label: input))
-                        }
-                        set {
-                            __implicitCast(impl2(newValue, label: input))
-                        }
-                    }
-                    static subscript(_ input: Any) -> Any {
-                        get {
-                            __implicitCast(impl1(input))
-                        }
-                        set {
-                            __implicitCast(impl2(newValue, input))
-                        }
-                    }
-                    static subscript(label param0: Any) -> Any {
-                        get {
-                            __implicitCast(impl1(label: param0))
-                        }
-                        set {
-                            __implicitCast(impl2(newValue, label: param0))
-                        }
-                    }
-                    static subscript(_ param0: Any) -> Any {
-                        get {
-                            __implicitCast(impl1(param0))
-                        }
-                        set {
-                            __implicitCast(impl2(newValue, param0))
-                        }
-                    }
-                }
-                """
-            }
-        }
-
-        @Test func `Static subscript with under-parametrized external default with varying parameter and input labels with setters`() {
-            assertMacro {
-                """
-                @TypeErased
-                protocol Protocol {
-                    @DefaultExternal(impl1) static subscript() -> Any { get set }
-                    @DefaultExternal(impl1) static subscript(label: Any) -> Any { get set }
-                    @DefaultExternal(impl1) static subscript(_: Any) -> Any { get set }
-                    @DefaultExternal(impl1) static subscript(label input: Any) -> Any { get set }
-                    @DefaultExternal(impl1) static subscript(_ input: Any) -> Any { get set }
-                    @DefaultExternal(impl1) static subscript(label _: Any) -> Any { get set }
-                    @DefaultExternal(impl1) static subscript(_ _: Any) -> Any { get set }
+                    @Default(.error) static subscript() -> Any { get }
+                    @Default(.error) static subscript() -> Any { get set }
                 }
                 """
             } expansion: {
                 #"""
                 protocol Protocol {
-                    @DefaultExternal(impl1) static subscript() -> Any { get set }
-                    @DefaultExternal(impl1) static subscript(label: Any) -> Any { get set }
-                    @DefaultExternal(impl1) static subscript(_: Any) -> Any { get set }
-                    @DefaultExternal(impl1) static subscript(label input: Any) -> Any { get set }
-                    @DefaultExternal(impl1) static subscript(_ input: Any) -> Any { get set }
-                    @DefaultExternal(impl1) static subscript(label _: Any) -> Any { get set }
-                    @DefaultExternal(impl1) static subscript(_ _: Any) -> Any { get set }
+                    static subscript() -> Any { get }
+                    static subscript() -> Any { get set }
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
                     static subscript() -> Any {
                         get {
-                            __implicitCast(impl1())
-                        }
-                        set {
                             fatalError("Tried to access static member \(#function) from type eraser")
                         }
                     }
-                    static subscript(label: Any) -> Any {
+                    static subscript() -> Any {
                         get {
-                            __implicitCast(impl1(label))
-                        }
-                        set {
                             fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static subscript(_ param0: Any) -> Any {
-                        get {
-                            __implicitCast(impl1(param0))
-                        }
-                        set {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static subscript(label input: Any) -> Any {
-                        get {
-                            __implicitCast(impl1(label: input))
-                        }
-                        set {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static subscript(_ input: Any) -> Any {
-                        get {
-                            __implicitCast(impl1(input))
-                        }
-                        set {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static subscript(label param0: Any) -> Any {
-                        get {
-                            __implicitCast(impl1(label: param0))
-                        }
-                        set {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static subscript(_ param0: Any) -> Any {
-                        get {
-                            __implicitCast(impl1(param0))
                         }
                         set {
                             fatalError("Tried to access static member \(#function) from type eraser")
@@ -2402,94 +3051,44 @@ struct `Macro Tests` {
             }
         }
 
-        @Test func `Static subscript with external default with varying modifiers`() {
+        @Test(.tags(.static, .option, .parameters))
+        func `Static subscripts with exportStaticToObjectLevel flag with varying parameter and input labels without setters`() {
             assertMacro {
                 """
-                @TypeErased
+                @TypeErased(options: .exportStaticToObjectLevel)
                 protocol Protocol {
-                    @DefaultExternal(impl1) static subscript() -> Any { get async }
-                    @DefaultExternal(impl1) static subscript() -> Any { get throws }
-                    @DefaultExternal(impl1) static subscript() -> Any { get async throws }
-                    @DefaultExternal(impl1) static subscript() -> Any { get throws(any Error) }
-                    @DefaultExternal(impl1) static subscript() -> Any { get throws(SomeError) }
-                    @DefaultExternal(impl1) static subscript() -> Any { get throws(Never) }
-                }
-                """
-            } expansion: {
-                """
-                protocol Protocol {
-                    @DefaultExternal(impl1) static subscript() -> Any { get async }
-                    @DefaultExternal(impl1) static subscript() -> Any { get throws }
-                    @DefaultExternal(impl1) static subscript() -> Any { get async throws }
-                    @DefaultExternal(impl1) static subscript() -> Any { get throws(any Error) }
-                    @DefaultExternal(impl1) static subscript() -> Any { get throws(SomeError) }
-                    @DefaultExternal(impl1) static subscript() -> Any { get throws(Never) }
-                }
-
-                struct AnyProtocol: Protocol, TypeEraser {
-                    var base: any Protocol
-                    init(_ erasing: some Protocol) {
-                        self.base = erasing
-                    }
-                    init(erasing: any Protocol) {
-                        self.base = erasing
-                    }
-                    static subscript() -> Any {
-                        get async {
-                            await __implicitCast(impl1())
-                        }
-                    }
-                    static subscript() -> Any {
-                        get throws {
-                            try __implicitCast(impl1())
-                        }
-                    }
-                    static subscript() -> Any {
-                        get async throws {
-                            try await __implicitCast(impl1())
-                        }
-                    }
-                    static subscript() -> Any {
-                        get throws(any Error) {
-                            try __implicitCast(impl1())
-                        }
-                    }
-                    static subscript() -> Any {
-                        get throws(SomeError) {
-                            try __implicitCast(impl1())
-                        }
-                    }
-                    static subscript() -> Any {
-                        get throws(Never) {
-                            try __implicitCast(impl1())
-                        }
-                    }
-                }
-                """
-            }
-        }
-
-        @Test func `Static subscript with no default`() {
-            assertMacro {
-                """
-                @TypeErased
-                protocol Protocol {
-                    @DefaultNone static subscript() -> Any { get }
-                    @DefaultNone static subscript() -> Any { get set }
+                    @Default(.none) static subscript() -> Any { get }
+                    @Default(.none) static subscript(label: Any) -> Any { get }
+                    @Default(.none) static subscript(_: Any) -> Any { get }
+                    @Default(.none) static subscript(label input: Any) -> Any { get }
+                    @Default(.none) static subscript(_ input: Any) -> Any { get }
+                    @Default(.none) static subscript(label _: Any) -> Any { get }
+                    @Default(.none) static subscript(_ _: Any) -> Any { get }
                 }
                 """
             } expansion: {
                 #"""
                 protocol Protocol {
                     static subscript() -> Any { get }
-                    static subscript() -> Any { get set }
+                    static subscript(label: Any) -> Any { get }
+                    static subscript(_: Any) -> Any { get }
+                    static subscript(label input: Any) -> Any { get }
+                    static subscript(_ input: Any) -> Any { get }
+                    static subscript(label _: Any) -> Any { get }
+                    static subscript(_ _: Any) -> Any { get }
+
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -2497,6 +3096,120 @@ struct `Macro Tests` {
                         get {
                             fatalError("Tried to access static member \(#function) from type eraser")
                         }
+                    }
+                    static subscript(label: Any) -> Any {
+                        get {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                    static subscript(_ param0: Any) -> Any {
+                        get {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                    static subscript(label input: Any) -> Any {
+                        get {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                    static subscript(_ input: Any) -> Any {
+                        get {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                    static subscript(label param0: Any) -> Any {
+                        get {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                    static subscript(_ param0: Any) -> Any {
+                        get {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                }
+
+                extension Protocol {
+                    subscript() -> Any {
+                        get {
+                            Self[]
+                        }
+                    }
+                    subscript(label: Any) -> Any {
+                        get {
+                            Self[__implicitCast(label)]
+                        }
+                    }
+                    subscript(_ param0: Any) -> Any {
+                        get {
+                            Self[__implicitCast(param0)]
+                        }
+                    }
+                    subscript(label input: Any) -> Any {
+                        get {
+                            Self[label: __implicitCast(input)]
+                        }
+                    }
+                    subscript(_ input: Any) -> Any {
+                        get {
+                            Self[__implicitCast(input)]
+                        }
+                    }
+                    subscript(label param0: Any) -> Any {
+                        get {
+                            Self[label: __implicitCast(param0)]
+                        }
+                    }
+                    subscript(_ param0: Any) -> Any {
+                        get {
+                            Self[__implicitCast(param0)]
+                        }
+                    }
+                }
+                """#
+            }
+        }
+
+        @Test(.tags(.static, .option, .parameters))
+        func `Static subscripts with exportStaticToObjectLevel flag with varying parameter and input labels with setters`() {
+            assertMacro {
+                """
+                @TypeErased(options: .exportStaticToObjectLevel)
+                protocol Protocol {
+                    @Default(.none) static subscript() -> Any { get set }
+                    @Default(.none) static subscript(label: Any) -> Any { get set }
+                    @Default(.none) static subscript(_: Any) -> Any { get set }
+                    @Default(.none) static subscript(label input: Any) -> Any { get set }
+                    @Default(.none) static subscript(_ input: Any) -> Any { get set }
+                    @Default(.none) static subscript(label _: Any) -> Any { get set }
+                    @Default(.none) static subscript(_ _: Any) -> Any { get set }
+                }
+                """
+            } expansion: {
+                #"""
+                protocol Protocol {
+                    static subscript() -> Any { get set }
+                    static subscript(label: Any) -> Any { get set }
+                    static subscript(_: Any) -> Any { get set }
+                    static subscript(label input: Any) -> Any { get set }
+                    static subscript(_ input: Any) -> Any { get set }
+                    static subscript(label _: Any) -> Any { get set }
+                    static subscript(_ _: Any) -> Any { get set }
+
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
+                }
+
+                struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
+                    var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    init(erasing: any Protocol) {
+                        self.base = erasing
                     }
                     static subscript() -> Any {
                         get {
@@ -2504,6 +3217,220 @@ struct `Macro Tests` {
                         }
                         set {
                             fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                    static subscript(label: Any) -> Any {
+                        get {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                        set {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                    static subscript(_ param0: Any) -> Any {
+                        get {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                        set {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                    static subscript(label input: Any) -> Any {
+                        get {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                        set {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                    static subscript(_ input: Any) -> Any {
+                        get {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                        set {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                    static subscript(label param0: Any) -> Any {
+                        get {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                        set {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                    static subscript(_ param0: Any) -> Any {
+                        get {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                        set {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                }
+
+                extension Protocol {
+                    subscript() -> Any {
+                        get {
+                            Self[]
+                        }
+                        set {
+                            Self[] = __implicitCast(newValue)
+                        }
+                    }
+                    subscript(label: Any) -> Any {
+                        get {
+                            Self[__implicitCast(label)]
+                        }
+                        set {
+                            Self[__implicitCast(label)] = __implicitCast(newValue)
+                        }
+                    }
+                    subscript(_ param0: Any) -> Any {
+                        get {
+                            Self[__implicitCast(param0)]
+                        }
+                        set {
+                            Self[__implicitCast(param0)] = __implicitCast(newValue)
+                        }
+                    }
+                    subscript(label input: Any) -> Any {
+                        get {
+                            Self[label: __implicitCast(input)]
+                        }
+                        set {
+                            Self[label: __implicitCast(input)] = __implicitCast(newValue)
+                        }
+                    }
+                    subscript(_ input: Any) -> Any {
+                        get {
+                            Self[__implicitCast(input)]
+                        }
+                        set {
+                            Self[__implicitCast(input)] = __implicitCast(newValue)
+                        }
+                    }
+                    subscript(label param0: Any) -> Any {
+                        get {
+                            Self[label: __implicitCast(param0)]
+                        }
+                        set {
+                            Self[label: __implicitCast(param0)] = __implicitCast(newValue)
+                        }
+                    }
+                    subscript(_ param0: Any) -> Any {
+                        get {
+                            Self[__implicitCast(param0)]
+                        }
+                        set {
+                            Self[__implicitCast(param0)] = __implicitCast(newValue)
+                        }
+                    }
+                }
+                """#
+            }
+        }
+
+        @Test(.tags(.static, .option, .modifiers))
+        func `Static subscripts with exportStaticToObjectLevel flag with varying modifiers`() {
+            assertMacro {
+                """
+                @TypeErased(options: .exportStaticToObjectLevel)
+                protocol Protocol {
+                    @Default(.none) static subscript() -> Any { get async }
+                    @Default(.none) static subscript() -> Any { get throws }
+                    @Default(.none) static subscript() -> Any { get async throws }
+                    @Default(.none) static subscript() -> Any { get throws(any Error) }
+                    @Default(.none) static subscript() -> Any { get throws(SomeError) }
+                    @Default(.none) static subscript() -> Any { get throws(Never) }
+                }
+                """
+            } expansion: {
+                #"""
+                protocol Protocol {
+                    static subscript() -> Any { get async }
+                    static subscript() -> Any { get throws }
+                    static subscript() -> Any { get async throws }
+                    static subscript() -> Any { get throws(any Error) }
+                    static subscript() -> Any { get throws(SomeError) }
+                    static subscript() -> Any { get throws(Never) }
+
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
+                }
+
+                struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
+                    var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                    static subscript() -> Any {
+                        get async {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                    static subscript() -> Any {
+                        get throws {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                    static subscript() -> Any {
+                        get async throws {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                    static subscript() -> Any {
+                        get throws(any Error) {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                    static subscript() -> Any {
+                        get throws(SomeError) {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                    static subscript() -> Any {
+                        get throws(Never) {
+                            fatalError("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                }
+
+                extension Protocol {
+                    subscript() -> Any {
+                        get async {
+                            await Self[]
+                        }
+                    }
+                    subscript() -> Any {
+                        get throws {
+                            try Self[]
+                        }
+                    }
+                    subscript() -> Any {
+                        get async throws {
+                            try await Self[]
+                        }
+                    }
+                    subscript() -> Any {
+                        get throws(any Error) {
+                            try Self[]
+                        }
+                    }
+                    subscript() -> Any {
+                        get throws(SomeError) {
+                            try Self[]
+                        }
+                    }
+                    subscript() -> Any {
+                        get throws(Never) {
+                            try Self[]
                         }
                     }
                 }
@@ -2512,7 +3439,7 @@ struct `Macro Tests` {
         }
     }
 
-    @Suite
+    @Suite(.tags(.static))
     struct `Initializer Tests` {
         @Test func `Non-marked initializer`() {
             assertMacro {
@@ -2534,18 +3461,19 @@ struct `Macro Tests` {
             }
         }
 
-        @Test func `Initializers with default type with varying parameter and input labels`() {
+        @Test(.tags(.parameters, .default))
+        func `Initializers with default type with varying parameter and input labels`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultType<Type> init()
-                    @DefaultType<Type> init(label: Any)
-                    @DefaultType<Type> init(_: Any)
-                    @DefaultType<Type> init(label input: Any)
-                    @DefaultType<Type> init(_ input: Any)
-                    @DefaultType<Type> init(label _: Any)
-                    @DefaultType<Type> init(_ _: Any)
+                    @Default(.type(Type.self)) init()
+                    @Default(.type(Type.self)) init(label: Any)
+                    @Default(.type(Type.self)) init(_: Any)
+                    @Default(.type(Type.self)) init(label input: Any)
+                    @Default(.type(Type.self)) init(_ input: Any)
+                    @Default(.type(Type.self)) init(label _: Any)
+                    @Default(.type(Type.self)) init(_ _: Any)
                 }
                 """
             } expansion: {
@@ -2558,13 +3486,19 @@ struct `Macro Tests` {
                     init(_ input: Any)
                     init(label _: Any)
                     init(_ _: Any)
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -2594,17 +3528,18 @@ struct `Macro Tests` {
             }
         }
 
-        @Test func `Initializers with default type with varying modifiers`() {
+        @Test(.tags(.modifiers, .default))
+        func `Initializers with default type with varying modifiers`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultType<Type> init() async
-                    @DefaultType<Type> init() throws
-                    @DefaultType<Type> init() async throws
-                    @DefaultType<Type> init() throws(any Error)
-                    @DefaultType<Type> init() throws(SomeError)
-                    @DefaultType<Type> init() throws(Never)
+                    @Default(.type(Type.self)) init() async
+                    @Default(.type(Type.self)) init() throws
+                    @Default(.type(Type.self)) init() async throws
+                    @Default(.type(Type.self)) init() throws(any Error)
+                    @Default(.type(Type.self)) init() throws(SomeError)
+                    @Default(.type(Type.self)) init() throws(Never)
                 }
                 """
             } expansion: {
@@ -2616,13 +3551,19 @@ struct `Macro Tests` {
                     init() throws(any Error)
                     init() throws(SomeError)
                     init() throws(Never)
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -2649,224 +3590,106 @@ struct `Macro Tests` {
             }
         }
 
-        @Test func `Optional initializer with default type`() {
+        @Test(.tags(.default))
+        func `Optional initializer with default type`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultType<Type> init?()
+                    @Default(.type(Type.self)) init?()
                 }
                 """
             } expansion: {
                 """
                 protocol Protocol {
                     init?()
+
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
                     init?() {
-                        self.init(Type())
-                    }
-                }
-                """
-            }
-        }
-
-        @Test func `Initializers with external default with varying parameter and input labels`() {
-            assertMacro {
-                """
-                @TypeErased
-                protocol Protocol {
-                    @DefaultExternal(impl1) init()
-                    @DefaultExternal(impl1) init(label: Any)
-                    @DefaultExternal(impl1) init(_: Any)
-                    @DefaultExternal(impl1) init(label input: Any)
-                    @DefaultExternal(impl1) init(_ input: Any)
-                    @DefaultExternal(impl1) init(label _: Any)
-                    @DefaultExternal(impl1) init(_ _: Any)
-                }
-                """
-            } expansion: {
-                """
-                protocol Protocol {
-                    @DefaultExternal(impl1) init()
-                    @DefaultExternal(impl1) init(label: Any)
-                    @DefaultExternal(impl1) init(_: Any)
-                    @DefaultExternal(impl1) init(label input: Any)
-                    @DefaultExternal(impl1) init(_ input: Any)
-                    @DefaultExternal(impl1) init(label _: Any)
-                    @DefaultExternal(impl1) init(_ _: Any)
-                }
-
-                struct AnyProtocol: Protocol, TypeEraser {
-                    var base: any Protocol
-                    init(_ erasing: some Protocol) {
-                        self.base = erasing
-                    }
-                    init(erasing: any Protocol) {
-                        self.base = erasing
-                    }
-                    init() {
-                        self = __implicitCast(impl1())
-                    }
-                    init(label: Any) {
-                        self = __implicitCast(impl1(label: label))
-                    }
-                    init(_ param0: Any) {
-                        self = __implicitCast(impl1(param0))
-                    }
-                    init(label input: Any) {
-                        self = __implicitCast(impl1(label: input))
-                    }
-                    init(_ input: Any) {
-                        self = __implicitCast(impl1(input))
-                    }
-                    init(label _: Any) {
-                        self = __implicitCast(impl1(label: label))
-                    }
-                    init(_ param0: Any) {
-                        self = __implicitCast(impl1(param0))
-                    }
-                }
-                """
-            }
-        }
-
-        @Test func `Initializers with external default with varying modifiers`() {
-            assertMacro {
-                """
-                @TypeErased
-                protocol Protocol {
-                    @DefaultExternal(impl1) init() async
-                    @DefaultExternal(impl1) init() throws
-                    @DefaultExternal(impl1) init() async throws
-                    @DefaultExternal(impl1) init() throws(any Error)
-                    @DefaultExternal(impl1) init() throws(SomeError)
-                    @DefaultExternal(impl1) init() throws(Never)
-                }
-                """
-            } expansion: {
-                """
-                protocol Protocol {
-                    @DefaultExternal(impl1) init() async
-                    @DefaultExternal(impl1) init() throws
-                    @DefaultExternal(impl1) init() async throws
-                    @DefaultExternal(impl1) init() throws(any Error)
-                    @DefaultExternal(impl1) init() throws(SomeError)
-                    @DefaultExternal(impl1) init() throws(Never)
-                }
-
-                struct AnyProtocol: Protocol, TypeEraser {
-                    var base: any Protocol
-                    init(_ erasing: some Protocol) {
-                        self.base = erasing
-                    }
-                    init(erasing: any Protocol) {
-                        self.base = erasing
-                    }
-                    init() async {
-                        self = __implicitCast(await impl1())
-                    }
-                    init() throws {
-                        self = __implicitCast(try impl1())
-                    }
-                    init() async throws {
-                        self = __implicitCast(try await impl1())
-                    }
-                    init() throws(any Error) {
-                        self = __implicitCast(try impl1())
-                    }
-                    init() throws(SomeError) {
-                        self = __implicitCast(try impl1())
-                    }
-                    init() throws(Never) {
-                        self = __implicitCast(impl1())
-                    }
-                }
-                """
-            }
-        }
-
-        @Test func `Optional initializer with external default`() {
-            assertMacro {
-                """
-                @TypeErased
-                protocol Protocol {
-                    @DefaultExternal(impl1) init?()
-                }
-                """
-            } expansion: {
-                """
-                protocol Protocol {
-                    @DefaultExternal(impl1) init?()
-                }
-
-                struct AnyProtocol: Protocol, TypeEraser {
-                    var base: any Protocol
-                    init(_ erasing: some Protocol) {
-                        self.base = erasing
-                    }
-                    init(erasing: any Protocol) {
-                        self.base = erasing
-                    }
-                    init?() {
-                        if let value: Self = impl1() {
-                            self = __implicitCast(value)
-                        } else {
+                        guard let type = Type() else {
                             return nil
-                        }
+                        };
+                        self.init(type)
                     }
                 }
                 """
             }
         }
 
-        @Test func `Initializer with default value`() {
+        @Test(.tags(.default))
+        func `Initializer with external default`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultValue(1) init()
+                    @Default(.external) init()
                 }
                 """
-            } diagnostics: {
+            } expansion: {
                 """
-                @TypeErased
                 protocol Protocol {
-                    @DefaultValue(1) init()
-                    ┬───────────────
-                    ╰─ 🛑 This macro isn't applicable to initializers and associated types
+                    init()
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
+                }
+                
+                struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
+                    var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
                 }
                 """
             }
         }
 
-        @Test func `Initializer with no default`() {
+        @Test(.tags(.default))
+        func `Initializer with no default`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @DefaultNone init()
+                    @Default(.error) init()
                 }
                 """
             } expansion: {
                 #"""
                 protocol Protocol {
                     init()
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -2879,48 +3702,8 @@ struct `Macro Tests` {
         }
     }
 
-    @Suite
+    @Suite(.tags(.static))
     struct `Associated Tests` {
-        @Test func `Associated with varying inheritance clauses with erasure type`() {
-            assertMacro {
-                """
-                @TypeErased
-                protocol Protocol {
-                    @ErasureType<Type> associatedtype T1
-                    @ErasureType<Type> associatedtype T2: Interface
-                    @ErasureType<Type> associatedtype T3: Interface, Protocol
-                    @ErasureType<Type> associatedtype T4: Interface & Protocol
-                    @ErasureType<Type> associatedtype T5: Interface & Protocol, Class
-                }
-                """
-            } expansion: {
-                """
-                protocol Protocol {
-                    associatedtype T1
-                    associatedtype T2: Interface
-                    associatedtype T3: Interface, Protocol
-                    associatedtype T4: Interface & Protocol
-                    associatedtype T5: Interface & Protocol, Class
-                }
-
-                struct AnyProtocol: Protocol, TypeEraser {
-                    typealias T1 = Type
-                    typealias T2 = Type
-                    typealias T3 = Type
-                    typealias T4 = Type
-                    typealias T5 = Type
-                    var base: any Protocol
-                    init(_ erasing: some Protocol) {
-                        self.base = erasing
-                    }
-                    init(erasing: any Protocol) {
-                        self.base = erasing
-                    }
-                }
-                """
-            }
-        }
-
         @Test func `Non-marked associated`() {
             assertMacro {
                 """
@@ -2941,28 +3724,102 @@ struct `Macro Tests` {
             }
         }
 
-        @Test func `Associated with defaults`() {
+        @Test(.tags(.erase))
+        func `Associated with varying inheritance clauses with explicit erasure type`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    associatedtype T
+                    @Erase<Type> associatedtype T1
+                    @Erase<Type> associatedtype T2: Interface
+                    @Erase<Type> associatedtype T3: Interface, Protocol
+                    @Erase<Type> associatedtype T4: Interface & Protocol
+                    @Erase<Type> associatedtype T5: Interface & Protocol, Class
                 }
                 """
-            } diagnostics: {
+            } expansion: {
+                """
+                protocol Protocol {
+                    associatedtype T1
+                    associatedtype T2: Interface
+                    associatedtype T3: Interface, Protocol
+                    associatedtype T4: Interface & Protocol
+                    associatedtype T5: Interface & Protocol, Class
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
+                }
+
+                struct AnyProtocol: Protocol, TypeEraser {
+                    typealias T1 = Type
+                    typealias T2 = Type
+                    typealias T3 = Type
+                    typealias T4 = Type
+                    typealias T5 = Type
+                    /// The value wrapped by this instance.
+                    var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                }
+                """
+            }
+        }
+
+        @Test(.tags(.erase))
+        func `Associated with varying inheritance clauses with implicit erasure type`() {
+            assertMacro {
                 """
                 @TypeErased
-                ┬──────────
-                ╰─ 🛑 Associated type 'T' must have a erasure specifier
                 protocol Protocol {
-                    associatedtype T
+                    @Erase associatedtype T1
+                    @Erase associatedtype T2: Interface
+                    @Erase associatedtype T3: Interface, Protocol
+                    @Erase associatedtype T4: Interface & Protocol
+                    @Erase associatedtype T5: Interface & Protocol, Class
+                }
+                """
+            } expansion: {
+                """
+                protocol Protocol {
+                    associatedtype T1
+                    associatedtype T2: Interface
+                    associatedtype T3: Interface, Protocol
+                    associatedtype T4: Interface & Protocol
+                    associatedtype T5: Interface & Protocol, Class
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
+                }
+
+                struct AnyProtocol: Protocol, TypeEraser {
+                    typealias T1 = Any
+                    typealias T2 = (Interface)._Eraser_
+                    typealias T3 = (Interface & Protocol)._Eraser_
+                    typealias T4 = (Interface & Protocol)._Eraser_
+                    typealias T5 = (Interface & Protocol & Class)._Eraser_
+                    /// The value wrapped by this instance.
+                    var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
                 }
                 """
             }
         }
     }
 
-    @Suite
+    @Suite(.tags(.static))
     struct `Type Alias Tests` {
         @Test func `Type alias`() {
             assertMacro {
@@ -2976,13 +3833,19 @@ struct `Macro Tests` {
                 """
                 protocol Protocol {
                     typealias T = Int
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -3003,13 +3866,20 @@ struct `Macro Tests` {
                 """
             } expansion: {
                 """
-                protocol Protocol: Equatable {}
+                protocol Protocol: Equatable {
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
+                }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -3038,13 +3908,20 @@ struct `Macro Tests` {
                 """
             } expansion: {
                 """
-                protocol Protocol: Hashable {}
+                protocol Protocol: Hashable {
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
+                }
 
                 struct AnyProtocol: Protocol, TypeEraser {
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -3089,7 +3966,7 @@ struct `Macro Tests` {
                 """
                 @TypeErased
                 protocol Protocol: Identifiable {
-                    @ErasureType<AnyHashable>
+                    @Erase<AnyHashable>
                     associatedtype ID: Hashable
                 }
 
@@ -3111,14 +3988,20 @@ struct `Macro Tests` {
                 """
                 protocol Protocol: Identifiable {
                     associatedtype ID: Hashable
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
                     typealias ID = AnyHashable
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -3126,14 +4009,21 @@ struct `Macro Tests` {
                         self.base.id
                     }
                 }
-                protocol Protocol: Identifiable where ID == Int {}
+                protocol Protocol: Identifiable where ID == Int {
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
+                }
 
                 struct AnyProtocol: Protocol, TypeEraser where ID == Int {
                     typealias ID = Int
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -3141,14 +4031,21 @@ struct `Macro Tests` {
                         self.base.id
                     }
                 }
-                protocol Protocol: Identifiable where Self.ID == Int {}
+                protocol Protocol: Identifiable where Self.ID == Int {
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
+                }
 
                 struct AnyProtocol: Protocol, TypeEraser where Self.ID == Int {
                     typealias ID = Int
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -3156,14 +4053,21 @@ struct `Macro Tests` {
                         self.base.id
                     }
                 }
-                protocol Protocol: Identifiable<Int> {}
+                protocol Protocol: Identifiable<Int> {
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
+                }
 
                 struct AnyProtocol: Protocol, TypeEraser {
                     typealias ID = Int
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -3173,14 +4077,20 @@ struct `Macro Tests` {
                 }
                 protocol Protocol: Identifiable {
                     var id: Int { get }
+                
+                    /// Used for automatically resolving the type of `Erase` macro.
+                    typealias _Eraser_ = AnyProtocol
                 }
 
                 struct AnyProtocol: Protocol, TypeEraser {
                     typealias ID = Int
+                    /// The value wrapped by this instance.
                     var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
                     init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
+                    /// Create an instance that type-erases `Protocol`.
                     init(erasing: any Protocol) {
                         self.base = erasing
                     }
@@ -3197,6 +4107,64 @@ struct `Macro Tests` {
                             return __implicitCast(_openExistential(self.base, do: id_genericOpen))
                         }
                     }
+                }
+                """
+            }
+        }
+    }
+
+    @Suite(.tags(.default))
+    struct `Default Tests` {
+        @Test func `Multiple default specifiers`() async throws {
+            assertMacro {
+                """
+                @TypeErased
+                protocol Protocol {
+                    @Default(.error)
+                    @Default(.external)
+                    static var variable: Any { get }
+                }
+                """
+            } diagnostics: {
+                """
+                @TypeErased
+                protocol Protocol {
+                    @Default(.error)
+                    ┬───────────────
+                    ╰─ 🛑 Requirement can only have one default
+                    @Default(.external)
+                    ┬──────────────────
+                    ╰─ 🛑 Requirement can only have one default
+                    static var variable: Any { get }
+                }
+                """
+            }
+        }
+    }
+
+    @Suite(.tags(.option))
+    struct `Options Tests` {
+        @Test func `Multiple option specifiers`() async throws {
+            assertMacro {
+                """
+                @TypeErased
+                protocol Protocol {
+                    @Options([])
+                    @Options(.assureNoAssociates)
+                    var variable: Any { get }
+                }
+                """
+            } diagnostics: {
+                """
+                @TypeErased
+                protocol Protocol {
+                    @Options([])
+                    ┬───────────
+                    ╰─ 🛑 Only static requirements can have a default
+                    @Options(.assureNoAssociates)
+                    ┬────────────────────────────
+                    ╰─ 🛑 Only static requirements can have a default
+                    var variable: Any { get }
                 }
                 """
             }

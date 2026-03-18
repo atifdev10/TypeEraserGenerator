@@ -5,10 +5,9 @@ import SwiftSyntaxMacros
 
     let testMacros: [String: Macro.Type] = [
         "TypeErased": TypeEraserMacro.self,
-        "ErasureType": ErasureMacro.self,
-        "DefaultType": DefaultTypeMacro.self,
-        "DefaultValue": DefaultValueMacro.self,
-        "DefaultNone": DefaultNoneMacro.self,
+        "Erase": EraseMacro.self,
+        "Default": DefaultMacro.self,
+        "Options": OptionsMacro.self,
     ]
 #else
     #error("Run on the host machine")

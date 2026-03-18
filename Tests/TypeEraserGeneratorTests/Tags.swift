@@ -1,3 +1,12 @@
 import Testing
 
-extension Tag {}
+extension Tag {
+    @Tag static var `default`: Self
+    @Tag static var option: Self
+    @Tag static var erase: Self
+
+    @Tag static var modifiers: Self
+    @Tag static var parameters: Self
+
+    @Tag static var `static`: Self
+}

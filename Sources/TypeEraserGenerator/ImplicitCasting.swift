@@ -1,6 +1,8 @@
 import Foundation
 
-/// Do not use directly.
+/// Used for implicit opening, packing, and casting.
+///
+/// > Warning: Do not use directly.
 public func __implicitCast<T1, T2>(
     _ input: T1,
     file: StaticString = #file,

@@ -37,19 +37,28 @@ let package = Package(
         .macro(
             name: "TypeEraserGeneratorMacros",
             dependencies: [
+                "MultiModule",
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
                 .product(name: "SwiftDiagnostics", package: "swift-syntax"),
                 .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
+                .product(name: "SwiftParser", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxMacroExpansion", package: "swift-syntax"),
+                .product(name: "SwiftOperators", package: "swift-syntax"),
+                .product(name: "SwiftParserDiagnostics", package: "swift-syntax"),
+                .product(name: "SwiftBasicFormat", package: "swift-syntax"),
                 .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
             ]
         ),
 
         .target(
             name: "TypeEraserGenerator",
-            dependencies: ["TypeEraserGeneratorMacros", "Helpers"]
+            dependencies: ["TypeEraserGeneratorMacros", "Helpers", "MultiModule"]
         ),
 
         .target(name: "Helpers"),
+
+        .target(name: "MultiModule"),
 
         .testTarget(
             name: "TypeEraserGeneratorTests",

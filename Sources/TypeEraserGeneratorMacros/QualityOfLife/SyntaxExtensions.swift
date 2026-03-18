@@ -3,7 +3,8 @@ import SwiftSyntax
 
 extension WithModifiersSyntax {
     var isStatic: Bool {
-        if `is`(InitializerDeclSyntax.self) {
+        if `is`(InitializerDeclSyntax.self) ||
+            `is`(AssociatedTypeDeclSyntax.self) {
             return true
         }
 
@@ -12,10 +13,27 @@ extension WithModifiersSyntax {
     }
 }
 
+extension WithAttributesSyntax {
+    var attributeNames: [String] {
+        attributes.compactMap(AttributeSyntax.init).map(\.name)
+    }
+}
+
+extension AttributeSyntax {
+    var name: String {
+        return String(
+            attributeName.trimmedDescription.prefix(while: \.isLetter)
+        )
+    }
+}
+
 extension FunctionDeclSyntax {
     var isThrowing: Bool {
-        signature.effectSpecifiers?.throwsClause != nil &&
-            signature.effectSpecifiers?.throwsClause?.type?.trimmedDescription != "Never"
+        guard let throwsClause = signature.effectSpecifiers?.throwsClause else {
+            return false
+        }
+
+        return throwsClause.type?.trimmedDescription != "Never"
     }
 
     var isAsync: Bool {
@@ -30,6 +48,16 @@ extension FunctionDeclSyntax {
         signature.returnClause?.type ?? "Void"
     }
 
+    var containsInoutParameter: Bool {
+        signature.parameterClause.parameters.contains { parameter in
+            AttributedTypeSyntax(parameter.type)?.specifiers
+                .compactMap(SimpleTypeSpecifierSyntax.init)
+                .contains {
+                    $0.specifier.trimmedDescription == "inout"
+                } ?? false
+        }
+    }
+
     var parameterLabels: [String?] {
         signature.parameterClause.parameters.map { parameter in
             if parameter.firstName.trimmedDescription == "_" {
@@ -40,30 +68,60 @@ extension FunctionDeclSyntax {
         }
     }
 
-    mutating func getParameterInputsAndFillEmpty() -> [String] {
-        var inputs = [String]()
+    mutating func fillEmptyInputParametersIfNeeded() {
+        transform(&signature.parameterClause.parameters) { index, parameter in
+            guard
+                parameter.secondName?.trimmedDescription == any(of: nil, "_"),
+                parameter.firstName.trimmedDescription == "_"
+            else {
+                return
+            }
 
-        transform(&signature.parameterClause.parameters) { _, parameter in
+            let wasSecondNameNil = parameter.secondName == nil
+
+            parameter.secondName = "param\(raw: index.integer)"
+
+            parameter.secondName!.leadingTrivia = wasSecondNameNil ? " " : ""
+        }
+    }
+
+    var parameterInputs: [String] {
+        signature.parameterClause.parameters.map { parameter in
             if let secondName = parameter.secondName,
                secondName.trimmedDescription != "_" {
-                inputs.append(secondName.trimmedDescription)
-            } else if parameter.firstName.trimmedDescription != "_" {
-                inputs.append(parameter.firstName.trimmedDescription)
-            } else {
-                let generated: TokenSyntax = "param\(raw: inputs.count)"
-                parameter.secondName = generated
-                inputs.append(generated.trimmedDescription)
+                return secondName.trimmedDescription
             }
-        }
 
-        return inputs
+            if parameter.firstName.trimmedDescription != "_" {
+                return parameter.firstName.trimmedDescription
+            }
+
+            return "error"
+        }
+    }
+
+    func formattedParameters(
+        transformer: (_ input: String) -> String = { $0 }
+    ) -> String {
+        zip(parameterLabels, parameterInputs)
+            .map { label, input in
+                guard let label else {
+                    return "\(transformer(input))"
+                }
+
+                return "\(label): \(transformer(input))"
+            }
+            .joined(separator: ", ")
     }
 }
 
 extension InitializerDeclSyntax {
     var isThrowing: Bool {
-        signature.effectSpecifiers?.throwsClause != nil &&
-            signature.effectSpecifiers?.throwsClause?.type?.trimmedDescription != "Never"
+        guard let throwsClause = signature.effectSpecifiers?.throwsClause else {
+            return false
+        }
+
+        return throwsClause.type?.trimmedDescription != "Never"
     }
 
     var isAsync: Bool {
@@ -74,6 +132,16 @@ extension InitializerDeclSyntax {
         optionalMark != nil
     }
 
+    var containsInoutParameter: Bool {
+        signature.parameterClause.parameters.contains { parameter in
+            AttributedTypeSyntax(parameter.type)?.specifiers
+                .compactMap(SimpleTypeSpecifierSyntax.init)
+                .contains {
+                    $0.specifier.trimmedDescription == "inout"
+                } ?? false
+        }
+    }
+
     var parameterLabels: [String?] {
         signature.parameterClause.parameters.map { parameter in
             if parameter.firstName.trimmedDescription == "_" {
@@ -84,48 +152,81 @@ extension InitializerDeclSyntax {
         }
     }
 
-    mutating func getParameterInputsAndFillEmpty() -> [String] {
-        var inputs = [String]()
+    mutating func fillEmptyInputParametersIfNeeded() {
+        transform(&signature.parameterClause.parameters) { index, parameter in
+            guard
+                parameter.secondName?.trimmedDescription == any(of: nil, "_"),
+                parameter.firstName.trimmedDescription == "_"
+            else {
+                return
+            }
 
-        transform(&signature.parameterClause.parameters) { _, parameter in
+            let wasSecondNameNil = parameter.secondName == nil
+
+            parameter.secondName = "param\(raw: index.integer)"
+
+            parameter.secondName!.leadingTrivia = wasSecondNameNil ? " " : ""
+        }
+    }
+
+    var parameterInputs: [String] {
+        signature.parameterClause.parameters.map { parameter in
             if let secondName = parameter.secondName,
                secondName.trimmedDescription != "_" {
-                inputs.append(secondName.trimmedDescription)
-            } else if parameter.firstName.trimmedDescription != "_" {
-                inputs.append(parameter.firstName.trimmedDescription)
-            } else {
-                let generated: TokenSyntax = "param\(raw: inputs.count)"
-                parameter.secondName = generated
-                inputs.append(generated.trimmedDescription)
+                return secondName.trimmedDescription
             }
-        }
 
-        return inputs
+            if parameter.firstName.trimmedDescription != "_" {
+                return parameter.firstName.trimmedDescription
+            }
+
+            return "error"
+        }
+    }
+
+    func formattedParameters(
+        transformer: (_ input: String) -> String = { $0 }
+    ) -> String {
+        zip(parameterLabels, parameterInputs)
+            .map { label, input in
+                guard let label else {
+                    return "\(transformer(input))"
+                }
+
+                return "\(label): \(transformer(input))"
+            }
+            .joined(separator: ", ")
     }
 }
 
 extension SubscriptDeclSyntax {
     var isThrowing: Bool {
-        accessorBlock?.accessors
-            .as(AccessorDeclListSyntax.self)?
-            .first?
-            .effectSpecifiers?
-            .throwsClause != nil &&
-            accessorBlock?.accessors
-            .as(AccessorDeclListSyntax.self)?
-            .first?
-            .effectSpecifiers?
-            .throwsClause?
-            .type?
-            .trimmedDescription != "Never"
+        guard
+            let throwsClause = AccessorDeclListSyntax(accessorBlock?.accessors)?
+                .first?
+                .effectSpecifiers?
+                .throwsClause
+        else {
+            return false
+        }
+
+        return throwsClause.type?.trimmedDescription != "Never"
     }
 
     var isAsync: Bool {
-        accessorBlock?.accessors
-            .as(AccessorDeclListSyntax.self)?
-            .first?
+        AccessorDeclListSyntax(accessorBlock?.accessors)?.first?
             .effectSpecifiers?
             .asyncSpecifier != nil
+    }
+
+    var containsInoutParameter: Bool {
+        parameterClause.parameters.contains { parameter in
+            AttributedTypeSyntax(parameter.type)?.specifiers
+                .compactMap(SimpleTypeSpecifierSyntax.init)
+                .contains {
+                    $0.specifier.trimmedDescription == "inout"
+                } ?? false
+        }
     }
 
     var parameterLabels: [String?] {
@@ -141,38 +242,50 @@ extension SubscriptDeclSyntax {
         }
     }
 
-    mutating func getParameterInputsAndFillEmpty() -> [String] {
-        var inputs = [String]()
+    mutating func fillEmptyInputParametersIfNeeded() {
+        transform(&parameterClause.parameters) { index, parameter in
+            let condition = if parameter.secondName != nil {
+                parameter.secondName?.trimmedDescription == "_"
+            } else {
+                parameter.firstName.trimmedDescription == "_"
+            }
 
-        transform(&parameterClause.parameters) { _, parameter in
-            guard let secondName = parameter.secondName else {
-                if parameter.firstName.trimmedDescription == "_" {
-                    let generated: TokenSyntax = """
-                    param\(raw: inputs.count)
-                    """
-
-                    parameter.secondName = generated
-                    inputs.append(generated.trimmedDescription)
-                } else {
-                    inputs.append(parameter.firstName.trimmedDescription)
-                }
+            guard condition else {
                 return
             }
 
-            if secondName.trimmedDescription == "_" {
-                let generated: TokenSyntax = "param\(raw: inputs.count)"
-                parameter.secondName = generated
-                inputs.append(generated.trimmedDescription)
-            } else {
-                inputs.append(secondName.trimmedDescription)
-            }
+            let wasSecondNameNil = parameter.secondName == nil
+
+            parameter.secondName = "param\(raw: index.integer)"
+
+            parameter.secondName!.leadingTrivia = wasSecondNameNil ? " " : ""
         }
-
-        return inputs
     }
-}
 
-extension SubscriptDeclSyntax {
+    var parameterInputs: [String] {
+        parameterClause.parameters.map { parameter in
+            guard let secondName = parameter.secondName else {
+                return parameter.firstName.trimmedDescription
+            }
+
+            return secondName.trimmedDescription
+        }
+    }
+
+    func formattedParameters(
+        transformer: (_ input: String) -> String = { $0 }
+    ) -> String {
+        zip(parameterLabels, parameterInputs)
+            .map { label, input in
+                guard let label else {
+                    return "\(transformer(input))"
+                }
+
+                return "\(label): \(transformer(input))"
+            }
+            .joined(separator: ", ")
+    }
+
     var returnType: TypeSyntax {
         returnClause.type
     }
@@ -197,4 +310,27 @@ extension AccessorDeclSyntax {
             fatalError()
         }
     }
+}
+
+extension SyntaxChildrenIndex {
+    var integer: Int {
+        guard let child = Mirror(reflecting: self).children.first else {
+            fatalError()
+        }
+
+        return child.value as! Int
+    }
+}
+
+func withDeclSyntaxCast<E: Error, T: DeclSyntaxProtocol>(
+    _ decl: inout DeclSyntax,
+    to type: T.Type,
+    _ block: (inout T) throws(E) -> Void
+) throws(E) {
+    var castedDecl: T {
+        get { decl.cast(T.self) }
+        set { decl = DeclSyntax(newValue) }
+    }
+
+    try block(&castedDecl)
 }

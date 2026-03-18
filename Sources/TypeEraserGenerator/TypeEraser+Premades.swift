@@ -5,7 +5,7 @@ import Helpers
 public protocol TypeEraser {
     associatedtype _Base_
     init(erasing: _Base_)
-    var base: _Base_ { get }
+    var base: _Base_ { get set }
 }
 
 extension AnyHashable: TypeEraser {
@@ -13,11 +13,21 @@ extension AnyHashable: TypeEraser {
         self.init(erasing)
     }
 
-    /// An overload of `base` any hashable that returns existential `Hashable`.
+    /// An overload of `base` that returns an existential `Hashable`.
     @_disfavoredOverload
     public var base: any Hashable {
-        self[keyPath: anyHashableBaseKeypath] as! any Hashable
+        get {
+            self[keyPath: anyHashableBaseKeyPath] as! any Hashable
+        }
+        set {
+            self = AnyHashable(newValue)
+        }
     }
+}
+
+extension Hashable {
+    /// Used for automatically resolving the type of `Erase` macro.
+    typealias _Eraser_ = AnyHashable
 }
 
 /// Type eraser for `Identifiable` protocol.
@@ -41,6 +51,11 @@ public struct AnyIdentifiable: Identifiable, TypeEraser {
             return base.id
         }; return _openExistential(base, do: id_genericOpen)
     }
+}
+
+extension Identifiable {
+    /// Used for automatically resolving the type of `Erase` macro.
+    typealias _Eraser_ = AnyIdentifiable
 }
 
 /// Type eraser for `Equatable` protocol.
@@ -69,6 +84,11 @@ public struct AnyEquatable: Equatable, TypeEraser {
     }
 }
 
+extension Equatable {
+    /// Used for automatically resolving the type of `Erase` macro.
+    typealias _Eraser_ = AnyEquatable
+}
+
 /// Type eraser for `Error` protocol.
 ///
 ///  > Important:
@@ -79,4 +99,9 @@ public struct AnyError: Error, TypeEraser {
     }
 
     public var base: any Error
+}
+
+extension Error {
+    /// Used for automatically resolving the type of `Erase` macro.
+    typealias _Eraser_ = AnyError
 }

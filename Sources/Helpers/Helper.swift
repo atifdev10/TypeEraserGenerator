@@ -1,3 +1,3 @@
 import Foundation
 
-public let anyHashableBaseKeypath = \AnyHashable.base
+public let anyHashableBaseKeyPath = \AnyHashable.base

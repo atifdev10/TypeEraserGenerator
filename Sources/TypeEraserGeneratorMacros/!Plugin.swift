@@ -5,10 +5,8 @@ import SwiftSyntaxMacros
 struct TypeEraserGeneratorPlugin: CompilerPlugin {
     let providingMacros: [Macro.Type] = [
         TypeEraserMacro.self,
-        DefaultTypeMacro.self,
-        DefaultValueMacro.self,
-        DefaultExternalMacro.self,
-        DefaultNoneMacro.self,
-        ErasureMacro.self,
+        DefaultMacro.self,
+        EraseMacro.self,
+        OptionsMacro.self,
     ]
 }

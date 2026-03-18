@@ -3,21 +3,25 @@ import SwiftDiagnostics
 import SwiftSyntax
 import SwiftSyntaxMacros
 
+// TODO: Better error names
+
 enum ExpansionError: Error, CustomStringConvertible {
     case protocolsOnly
     case incorrectOptions
+    case incorrectDefault
     case memberOfProtocolOnly
     case onlyApplicableToStatics
-    case onlyApplicableToAssocs
+    case onlyApplicableToAssociates
     case protocolNotMarked
-    case onlyOneSpecifierAllowed
+    case onlyOneDefaultAllowed
+    case onlyOneOptionAllowed
     case setterNotAllowed
-    case notApplicableToInitAndAssoc
+    case notApplicableToInitAndAssociated
     case inoutNotSupportedYet
-    case accessorImplMissing
+    case accessorImplementationMissing
 
     case notSupportedDecl(kind: SyntaxKind)
-    case assocMustHaveAErasureSpecifier(assoc: String)
+    case associatedMustHaveErasureSpecifier(associated: String)
     case notSupported(kind: any Sendable)
     case notSupportedAccessor(_ accessor: String)
 
@@ -35,38 +39,44 @@ enum ExpansionError: Error, CustomStringConvertible {
         case .incorrectOptions:
             "Options should only have direct accesses to options"
 
+        case .incorrectDefault:
+            "Default should only have direct accesses to defaults"
+
         case .memberOfProtocolOnly:
             "Only static requirements of protocol can have a default"
 
         case .onlyApplicableToStatics:
             "Only static requirements can have a default"
 
-        case .onlyApplicableToAssocs:
+        case .onlyApplicableToAssociates:
             "Only associated types can have a erasure specifier"
 
         case .protocolNotMarked:
             "Protocol isn't marked to be type erased"
 
-        case .onlyOneSpecifierAllowed:
+        case .onlyOneDefaultAllowed:
             "Requirement can only have one default"
+
+        case .onlyOneOptionAllowed:
+            "Requirement can only have one option specifier"
 
         case .setterNotAllowed:
             "This default doesn't support the use of set requirement"
 
-        case .notApplicableToInitAndAssoc:
+        case .notApplicableToInitAndAssociated:
             "This macro isn't applicable to initializers and associated types"
 
         case .inoutNotSupportedYet:
             "Inout parameters are not supported yet"
 
-        case .accessorImplMissing:
+        case .accessorImplementationMissing:
             "Implementation for the second accessor is missing"
 
         case let .notSupportedDecl(kind):
             "Not supported: \(kind)"
 
-        case let .assocMustHaveAErasureSpecifier(assoc):
-            "Associated type '\(assoc)' must have a erasure specifier"
+        case let .associatedMustHaveErasureSpecifier(associated):
+            "Associated type '\(associated)' must have a erasure specifier"
 
         case let .notSupported(kind):
             "Not supported: \(kind)"
