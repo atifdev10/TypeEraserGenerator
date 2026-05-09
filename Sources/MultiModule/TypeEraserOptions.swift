@@ -14,7 +14,7 @@ public struct TypeEraserOptions: OptionSet, Sendable {
     public static let disableEraserInheritance = TypeEraserOptions(rawValue: 1 << 1)
 
     /// Generates the required composition erasers by itself.
-    public static let selfGenerateCompositions = TypeEraserOptions(rawValue: 1 << 1)
+    public static let selfGenerateCompositions = TypeEraserOptions(rawValue: 1 << 2)
 
     public init?(string: String) {
         switch string {
