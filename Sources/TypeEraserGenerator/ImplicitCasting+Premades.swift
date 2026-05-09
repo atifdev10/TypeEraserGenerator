@@ -3,13 +3,13 @@ import Foundation
 /// Used for implicit opening, erasing.
 ///
 /// > Warning: Do not use directly unless you're implementing `Castable`.
-func implicitCast<T1, T2>(
+public func implicitCast<T1, T2>(
     _ input: T1,
     file: StaticString = #file,
     line: UInt = #line
 ) -> T2 {
-    if T1.self == T2.self {
-        return input as! T2
+    if let output = input as? T2 {
+        return output
     }
 
     func initialiseTypeEraser<T: TypeEraser>(_: T.Type) -> T2? {
@@ -25,10 +25,6 @@ func implicitCast<T1, T2>(
     if let input = input as? any TypeEraser,
        let value = input.base as? T2 {
         return value
-    }
-
-    if let output = input as? T2 {
-        return output
     }
 
     if let castable = input as? any Castable {
