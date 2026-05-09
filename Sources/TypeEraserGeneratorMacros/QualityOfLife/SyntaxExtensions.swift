@@ -21,9 +21,7 @@ extension WithAttributesSyntax {
 
 extension AttributeSyntax {
     var name: String {
-        return String(
-            attributeName.trimmedDescription.prefix(while: \.isLetter)
-        )
+        String(attributeName.trimmedDescription.prefix(while: \.isLetter))
     }
 }
 
@@ -106,10 +104,10 @@ extension FunctionDeclSyntax {
         zip(parameterLabels, parameterInputs)
             .map { label, input in
                 guard let label else {
-                    return "\(transformer(input))"
+                    return transformer(input)
                 }
 
-                return "\(label): \(transformer(input))"
+                return label + ":" + transformer(input)
             }
             .joined(separator: ", ")
     }
@@ -190,10 +188,10 @@ extension InitializerDeclSyntax {
         zip(parameterLabels, parameterInputs)
             .map { label, input in
                 guard let label else {
-                    return "\(transformer(input))"
+                    return transformer(input)
                 }
 
-                return "\(label): \(transformer(input))"
+                return label + ":" + transformer(input)
             }
             .joined(separator: ", ")
     }
@@ -202,10 +200,8 @@ extension InitializerDeclSyntax {
 extension SubscriptDeclSyntax {
     var isThrowing: Bool {
         guard
-            let throwsClause = AccessorDeclListSyntax(accessorBlock?.accessors)?
-                .first?
-                .effectSpecifiers?
-                .throwsClause
+            let accessors = AccessorDeclListSyntax(accessorBlock?.accessors),
+            let throwsClause = accessors.first?.effectSpecifiers?.throwsClause
         else {
             return false
         }
@@ -278,10 +274,10 @@ extension SubscriptDeclSyntax {
         zip(parameterLabels, parameterInputs)
             .map { label, input in
                 guard let label else {
-                    return "\(transformer(input))"
+                    return transformer(input)
                 }
 
-                return "\(label): \(transformer(input))"
+                return label + ":" + transformer(input)
             }
             .joined(separator: ", ")
     }
@@ -324,7 +320,7 @@ extension SyntaxChildrenIndex {
 
 func withDeclSyntaxCast<E: Error, T: DeclSyntaxProtocol>(
     _ decl: inout DeclSyntax,
-    to type: T.Type,
+    to _: T.Type,
     _ block: (inout T) throws(E) -> Void
 ) throws(E) {
     var castedDecl: T {

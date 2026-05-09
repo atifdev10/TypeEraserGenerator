@@ -1,7 +1,7 @@
 import SwiftSyntax
 import SwiftSyntaxMacros
 
-struct OptionsMacro: PeerMacro {
+struct EraseMacro: PeerMacro {
     static func expansion(
         of node: AttributeSyntax,
         providingPeersOf declaration: some DeclSyntaxProtocol,
@@ -10,19 +10,19 @@ struct OptionsMacro: PeerMacro {
         let parent = context.lexicalContext.first
 
         guard let `protocol` = ProtocolDeclSyntax(parent) else {
-            throw ExpansionError.memberOfProtocolOnly
+            throw NotProtocolRequirementError()
         }
 
-        guard `protocol`.attributeNames.contains("TypeErased") else {
-            throw ExpansionError.protocolNotMarked
+        guard isAttachedHelperPlacementValid(for: `protocol`, context: context) else {
+            throw NotTypeErasedProtocolError()
         }
 
-        guard isStatic(declaration) else {
-            throw ExpansionError.onlyApplicableToStatics
+        guard declaration.is(AssociatedTypeDeclSyntax.self) else {
+            throw MacroError("Only associated types can have an eraser")
         }
 
         guard attributeCount(declaration, name: node.name) < 2 else {
-            throw ExpansionError.onlyOneOptionAllowed
+            throw MacroError("Associated types must have a single eraser")
         }
 
         return []

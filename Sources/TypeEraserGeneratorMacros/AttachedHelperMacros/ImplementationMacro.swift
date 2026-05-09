@@ -1,7 +1,7 @@
 import SwiftSyntax
 import SwiftSyntaxMacros
 
-struct DefaultMacro: PeerMacro {
+struct ImplementationMacro: PeerMacro {
     static func expansion(
         of node: AttributeSyntax,
         providingPeersOf declaration: some DeclSyntaxProtocol,
@@ -10,23 +10,21 @@ struct DefaultMacro: PeerMacro {
         let parent = context.lexicalContext.first
 
         guard let `protocol` = ProtocolDeclSyntax(parent) else {
-            throw ExpansionError.memberOfProtocolOnly
+            throw NotProtocolRequirementError()
         }
 
-        guard `protocol`.attributeNames.contains("TypeErased") else {
-            throw ExpansionError.protocolNotMarked
+        guard isAttachedHelperPlacementValid(for: `protocol`, context: context) else {
+            throw NotTypeErasedProtocolError()
         }
 
         guard isStatic(declaration) else {
-            throw ExpansionError.onlyApplicableToStatics
+            throw MacroError("Non-static requirements cannot have an explicit implementation")
         }
 
         guard attributeCount(declaration, name: node.name) < 2 else {
-            throw ExpansionError.onlyOneDefaultAllowed
+            throw MacroError("Static requirements must have a single explicit implementation")
         }
 
         return []
     }
 }
-
-

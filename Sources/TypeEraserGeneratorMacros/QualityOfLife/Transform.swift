@@ -3,10 +3,6 @@ import SwiftSyntax
 
 struct EquatableValues<T: Equatable> {
     fileprivate var values: [T]
-
-    fileprivate init(values: [T]) {
-        self.values = values
-    }
 }
 
 func any<T: Equatable>(of values: T...) -> EquatableValues<T> {
@@ -19,10 +15,6 @@ func == <T: Equatable>(lhs: T, rhs: EquatableValues<T>) -> Bool {
 
 func != <T: Equatable>(lhs: T, rhs: EquatableValues<T>) -> Bool {
     !rhs.values.contains(lhs)
-}
-
-func run<T>(_ block: () throws -> T) rethrows -> T {
-    try block()
 }
 
 extension SyntaxCollection {
@@ -45,7 +37,7 @@ extension SyntaxCollection {
     mutating func remove(bulk indexes: [Index]) -> [Element] {
         var result = [Element]()
 
-        var removalOffset: Int = 0
+        var removalOffset = 0
 
         for index in indexes {
             let removed = remove(at: self.index(at: index.integer + removalOffset))
@@ -62,13 +54,26 @@ extension Array {
     mutating func remove(bulk indexes: [Index]) -> [Element] {
         var result = [Element]()
 
-        var removalOffset: Int = 0
+        var removalOffset = 0
 
         for index in indexes {
             let removed = remove(at: index + removalOffset)
             removalOffset -= 1
             result.append(removed)
         }
+
+        return result
+    }
+
+    @discardableResult
+    mutating func removeEverything(where isRemoved: (Element) -> Bool) -> [Element] {
+        var result = [Element]()
+
+        for index in indices where isRemoved(self[index]) {
+            result.append(self[index])
+        }
+
+        removeAll(where: isRemoved)
 
         return result
     }
@@ -206,6 +211,11 @@ enum LoopWorkflow: Error {
     case `break`(label: Int = 0)
     case `continue`(label: Int = 0)
 
-    static var `break`: Self { .break() }
-    static var `continue`: Self { .continue() }
+    static var `break`: Self {
+        .break()
+    }
+
+    static var `continue`: Self {
+        .continue()
+    }
 }

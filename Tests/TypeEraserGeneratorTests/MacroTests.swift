@@ -1,9 +1,10 @@
 import MacroTesting
 import Testing
 
+// TODO: This is fragile
+
 @Suite(.macros(testMacros))
 struct `Macro Tests` {
-    @Suite
     struct `Eraser Tests` {
         @Test func `Type erased on protocol`() {
             assertMacro {
@@ -13,22 +14,37 @@ struct `Macro Tests` {
                 """
             } expansion: {
                 """
-                protocol Protocol {
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
-                }
+                protocol Protocol {}
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                 }
                 """
@@ -49,43 +65,71 @@ struct `Macro Tests` {
             } expansion: {
                 """
                 @MainActor
-                protocol Protocol {
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
+                protocol Protocol {}
+
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
+                    /// The value wrapped by this instance.
+                    internal var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    internal init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    internal init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
                 }
 
-                @MainActor
-                struct AnyProtocol: Protocol, TypeEraser {
-                    /// The value wrapped by this instance.
-                    var base: any Protocol
-                    /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
-                        self.base = erasing
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
                     }
-                    /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
-                        self.base = erasing
-                    }
-                }
-                nonisolated
-                protocol Protocol {
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
                 nonisolated
-                struct AnyProtocol: Protocol, TypeEraser {
+                protocol Protocol {}
+
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
+                    }
+                }
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                 }
                 """
@@ -114,34 +158,506 @@ struct `Macro Tests` {
                 """
                 @TypeErased
                 ┬──────────
-                ╰─ 🛑 Only protocols are type erasable
+                ╰─ 🛑 Cannot type erase a non-protocol type
                 struct Protocol {}
 
                 @TypeErased
                 ┬──────────
-                ╰─ 🛑 Only protocols are type erasable
+                ╰─ 🛑 Cannot type erase a non-protocol type
                 class Protocol {}
 
                 @TypeErased
                 ┬──────────
-                ╰─ 🛑 Only protocols are type erasable
+                ╰─ 🛑 Cannot type erase a non-protocol type
                 actor Protocol {}
 
                 @TypeErased
                 ┬──────────
-                ╰─ 🛑 Only protocols are type erasable
+                ╰─ 🛑 Cannot type erase a non-protocol type
                 enum Protocol {}
 
                 @TypeErased
                 ┬──────────
-                ╰─ 🛑 Only protocols are type erasable
+                ╰─ 🛑 Cannot type erase a non-protocol type
                 let value = 0
+                """
+            }
+        }
+
+        @Test(.tags(.associateAndAssociateEraser))
+        func `Type erased with selfGenerateCompositions flag with multiple associate addition types`() {
+            assertMacro {
+                """
+                @TypeErased(options: .selfGenerateCompositions)
+                protocol Protocol {
+                    @Erase
+                    associatedtype A: Protocol1
+                    @Erase
+                    associatedtype B: Protocol1, Protocol2
+                    @Erase
+                    associatedtype C: Protocol1, Protocol2
+
+                    @Associate<any Protocol4>("D")
+                    @Associate<any Protocol4, any Protocol5>("E")
+                    @Associate<any Protocol4, any Protocol5, any Protocol6>("F")
+                    var variable: Any { get }
+                }
+                """
+            } expansion: {
+                """
+                protocol Protocol {
+                    associatedtype A: Protocol1
+                    associatedtype B: Protocol1, Protocol2
+                    associatedtype C: Protocol1, Protocol2
+                    var variable: Any { get }
+                }
+
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
+                    /// The value wrapped by this instance.
+                    internal var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    internal init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    internal init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                        associatedtype A: Protocol1 = AnyProtocol1
+                        associatedtype B: Protocol1, Protocol2 = AnyProtocol1AndProtocol2
+                        associatedtype C: Protocol1, Protocol2 = AnyProtocol1AndProtocol2
+                        associatedtype D: Protocol4 = AnyProtocol4
+                        associatedtype E: Protocol4, Protocol5 = AnyProtocol4AndProtocol5
+                        associatedtype F: Protocol4, Protocol5, Protocol6 = AnyProtocol4AndProtocol5AndProtocol6
+                    }
+                    struct AnyProtocol1AndProtocol2: TypeEraser, ErasedProtocol1, ErasedProtocol2 {
+                        /// The value wrapped by this instance.
+                        var base: any Protocol1 & Protocol2
+                        /// Create an instance that type-erases `Protocol1&Protocol2`.
+                        init(_ erasing: some Protocol1 & Protocol2) {
+                            self.base = erasing
+                        }
+                        /// Create an instance that type-erases `Protocol1&Protocol2`.
+                        init(erasing: any Protocol1 & Protocol2) {
+                            self.base = erasing
+                        }
+                    }
+                    struct AnyProtocol1AndProtocol2: TypeEraser, ErasedProtocol1, ErasedProtocol2 {
+                        /// The value wrapped by this instance.
+                        var base: any Protocol1 & Protocol2
+                        /// Create an instance that type-erases `Protocol1&Protocol2`.
+                        init(_ erasing: some Protocol1 & Protocol2) {
+                            self.base = erasing
+                        }
+                        /// Create an instance that type-erases `Protocol1&Protocol2`.
+                        init(erasing: any Protocol1 & Protocol2) {
+                            self.base = erasing
+                        }
+                    }
+                    struct AnyProtocol4AndProtocol5: TypeEraser, ErasedProtocol4, ErasedProtocol5 {
+                        /// The value wrapped by this instance.
+                        var base: any Protocol4 & Protocol5
+                        /// Create an instance that type-erases `Protocol4&Protocol5`.
+                        init(_ erasing: some Protocol4 & Protocol5) {
+                            self.base = erasing
+                        }
+                        /// Create an instance that type-erases `Protocol4&Protocol5`.
+                        init(erasing: any Protocol4 & Protocol5) {
+                            self.base = erasing
+                        }
+                    }
+                    struct AnyProtocol4AndProtocol5AndProtocol6: TypeEraser, ErasedProtocol4, ErasedProtocol5, ErasedProtocol6 {
+                        /// The value wrapped by this instance.
+                        var base: any Protocol4 & Protocol5 & Protocol6
+                        /// Create an instance that type-erases `Protocol4&Protocol5&Protocol6`.
+                        init(_ erasing: some Protocol4 & Protocol5 & Protocol6) {
+                            self.base = erasing
+                        }
+                        /// Create an instance that type-erases `Protocol4&Protocol5&Protocol6`.
+                        init(erasing: any Protocol4 & Protocol5 & Protocol6) {
+                            self.base = erasing
+                        }
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
+                    }
+                        var variable: Any {
+                        get {
+                            func variable_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
+                                var localBase: _OpenBase_ {
+                                    get {
+                                        self.base_Protocol as! _OpenBase_
+                                    }
+                                };
+                                return implicitCast(localBase.variable)
+                            };
+                            return implicitCast(_openExistential(self.base_Protocol, do: variable_genericOpen))
+                        }
+                    }
+                }
+                """
+            }
+        }
+
+        @Test func `Type erased with disableEraserInheritance flag`() {
+            assertMacro {
+                """
+                @TypeErased(options: .disableEraserInheritance)
+                protocol Protocol: Protocol1, Protocol2, Protocol3 {}
+                """
+            } expansion: {
+                """
+                protocol Protocol: Protocol1, Protocol2, Protocol3 {}
+
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
+                    /// The value wrapped by this instance.
+                    internal var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    internal init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    internal init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
+                    }
+                }
+                """
+            }
+        }
+
+        @Test func `Type erased with advanced where clauses`() {
+            assertMacro {
+                """
+                @TypeErased
+                protocol Protocol: Protocol8 where
+                    AS.AS2: Protocol1,
+                    AS.AS3: Protocol2,
+                    Self: Protocol3,
+                    Self.AS1: Protocol4,
+                    Self.AS1: Protocol5,
+                    AS1: Protocol6 {
+                @Erase
+                associatedtype AS: Protocol6 where AS: Protocol7, AS2 == Int
+                }
+                """
+            } expansion: {
+                """
+                protocol Protocol: Protocol8 where
+                    AS.AS2: Protocol1,
+                    AS.AS3: Protocol2,
+                    Self: Protocol3,
+                    Self.AS1: Protocol4,
+                    Self.AS1: Protocol5,
+                    AS1: Protocol6 {
+                associatedtype AS: Protocol6 where AS: Protocol7, AS2 == Int
+                }
+
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
+                    /// The value wrapped by this instance.
+                    internal var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    internal init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    internal init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                    struct AS: TypeEraser, ErasedProtocol1, ErasedProtocol7 {
+                        /// The value wrapped by this instance.
+                        var base: any Protocol1 & Protocol7
+                        /// Create an instance that type-erases `Protocol1&Protocol7`.
+                        init(_ erasing: some Protocol1 & Protocol7) {
+                            self.base = erasing
+                        }
+                        /// Create an instance that type-erases `Protocol1&Protocol7`.
+                        init(erasing: any Protocol1 & Protocol7) {
+                            self.base = erasing
+                        }
+                        typealias AS2 = AnyProtocol1
+                    }
+                    typealias AS1 = AnyProtocol4AndProtocol5AndProtocol6
+                    typealias AS2 = Int
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol, ErasedProtocol8, ErasedProtocol3 {
+                        associatedtype AS: Protocol6 = AnyProtocol6
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
+                    }
+                }
                 """
             }
         }
     }
 
-    @Suite
+    struct `Composition Tests` {
+        @Test func `Composition type eraser`() {
+            assertMacro {
+                """
+                enum Storage {
+                    #compositionTypeEraser<any Protocol1, any Protocol2>()
+                    #compositionTypeEraser<any Protocol1, any Protocol2, any Protocol3>()
+                    #compositionTypeEraser<any Protocol1, any Protocol2, any Protocol3, any Protocol4>()
+                }
+                """
+            } expansion: {
+                """
+                enum Storage {
+                    struct AnyProtocol1AndProtocol2: TypeEraser, ErasedProtocol1, ErasedProtocol2 {
+                        /// The value wrapped by this instance.
+                        var base: any Protocol1 & Protocol2
+                        /// Create an instance that type-erases `Protocol1&Protocol2`.
+                        init(_ erasing: some Protocol1 & Protocol2) {
+                            self.base = erasing
+                        }
+                        /// Create an instance that type-erases `Protocol1&Protocol2`.
+                        init(erasing: any Protocol1 & Protocol2) {
+                            self.base = erasing
+                        }
+                    }
+                    typealias AnyProtocol2AndProtocol1 = AnyProtocol1AndProtocol2
+                    struct AnyProtocol1AndProtocol2AndProtocol3: TypeEraser, ErasedProtocol1, ErasedProtocol2, ErasedProtocol3 {
+                        /// The value wrapped by this instance.
+                        var base: any Protocol1 & Protocol2 & Protocol3
+                        /// Create an instance that type-erases `Protocol1&Protocol2&Protocol3`.
+                        init(_ erasing: some Protocol1 & Protocol2 & Protocol3) {
+                            self.base = erasing
+                        }
+                        /// Create an instance that type-erases `Protocol1&Protocol2&Protocol3`.
+                        init(erasing: any Protocol1 & Protocol2 & Protocol3) {
+                            self.base = erasing
+                        }
+                    }
+                    typealias AnyProtocol1AndProtocol3AndProtocol2 = AnyProtocol1AndProtocol2AndProtocol3
+                    typealias AnyProtocol2AndProtocol1AndProtocol3 = AnyProtocol1AndProtocol2AndProtocol3
+                    typealias AnyProtocol2AndProtocol3AndProtocol1 = AnyProtocol1AndProtocol2AndProtocol3
+                    typealias AnyProtocol3AndProtocol1AndProtocol2 = AnyProtocol1AndProtocol2AndProtocol3
+                    typealias AnyProtocol3AndProtocol2AndProtocol1 = AnyProtocol1AndProtocol2AndProtocol3
+                    struct AnyProtocol1AndProtocol2AndProtocol3AndProtocol4: TypeEraser, ErasedProtocol1, ErasedProtocol2, ErasedProtocol3, ErasedProtocol4 {
+                        /// The value wrapped by this instance.
+                        var base: any Protocol1 & Protocol2 & Protocol3 & Protocol4
+                        /// Create an instance that type-erases `Protocol1&Protocol2&Protocol3&Protocol4`.
+                        init(_ erasing: some Protocol1 & Protocol2 & Protocol3 & Protocol4) {
+                            self.base = erasing
+                        }
+                        /// Create an instance that type-erases `Protocol1&Protocol2&Protocol3&Protocol4`.
+                        init(erasing: any Protocol1 & Protocol2 & Protocol3 & Protocol4) {
+                            self.base = erasing
+                        }
+                    }
+                    typealias AnyProtocol1AndProtocol2AndProtocol4AndProtocol3 = AnyProtocol1AndProtocol2AndProtocol3AndProtocol4
+                    typealias AnyProtocol1AndProtocol3AndProtocol2AndProtocol4 = AnyProtocol1AndProtocol2AndProtocol3AndProtocol4
+                    typealias AnyProtocol1AndProtocol3AndProtocol4AndProtocol2 = AnyProtocol1AndProtocol2AndProtocol3AndProtocol4
+                    typealias AnyProtocol1AndProtocol4AndProtocol2AndProtocol3 = AnyProtocol1AndProtocol2AndProtocol3AndProtocol4
+                    typealias AnyProtocol1AndProtocol4AndProtocol3AndProtocol2 = AnyProtocol1AndProtocol2AndProtocol3AndProtocol4
+                    typealias AnyProtocol2AndProtocol1AndProtocol3AndProtocol4 = AnyProtocol1AndProtocol2AndProtocol3AndProtocol4
+                    typealias AnyProtocol2AndProtocol1AndProtocol4AndProtocol3 = AnyProtocol1AndProtocol2AndProtocol3AndProtocol4
+                    typealias AnyProtocol2AndProtocol3AndProtocol1AndProtocol4 = AnyProtocol1AndProtocol2AndProtocol3AndProtocol4
+                    typealias AnyProtocol2AndProtocol3AndProtocol4AndProtocol1 = AnyProtocol1AndProtocol2AndProtocol3AndProtocol4
+                    typealias AnyProtocol2AndProtocol4AndProtocol1AndProtocol3 = AnyProtocol1AndProtocol2AndProtocol3AndProtocol4
+                    typealias AnyProtocol2AndProtocol4AndProtocol3AndProtocol1 = AnyProtocol1AndProtocol2AndProtocol3AndProtocol4
+                    typealias AnyProtocol3AndProtocol1AndProtocol2AndProtocol4 = AnyProtocol1AndProtocol2AndProtocol3AndProtocol4
+                    typealias AnyProtocol3AndProtocol1AndProtocol4AndProtocol2 = AnyProtocol1AndProtocol2AndProtocol3AndProtocol4
+                    typealias AnyProtocol3AndProtocol2AndProtocol1AndProtocol4 = AnyProtocol1AndProtocol2AndProtocol3AndProtocol4
+                    typealias AnyProtocol3AndProtocol2AndProtocol4AndProtocol1 = AnyProtocol1AndProtocol2AndProtocol3AndProtocol4
+                    typealias AnyProtocol3AndProtocol4AndProtocol1AndProtocol2 = AnyProtocol1AndProtocol2AndProtocol3AndProtocol4
+                    typealias AnyProtocol3AndProtocol4AndProtocol2AndProtocol1 = AnyProtocol1AndProtocol2AndProtocol3AndProtocol4
+                    typealias AnyProtocol4AndProtocol1AndProtocol2AndProtocol3 = AnyProtocol1AndProtocol2AndProtocol3AndProtocol4
+                    typealias AnyProtocol4AndProtocol1AndProtocol3AndProtocol2 = AnyProtocol1AndProtocol2AndProtocol3AndProtocol4
+                    typealias AnyProtocol4AndProtocol2AndProtocol1AndProtocol3 = AnyProtocol1AndProtocol2AndProtocol3AndProtocol4
+                    typealias AnyProtocol4AndProtocol2AndProtocol3AndProtocol1 = AnyProtocol1AndProtocol2AndProtocol3AndProtocol4
+                    typealias AnyProtocol4AndProtocol3AndProtocol1AndProtocol2 = AnyProtocol1AndProtocol2AndProtocol3AndProtocol4
+                    typealias AnyProtocol4AndProtocol3AndProtocol2AndProtocol1 = AnyProtocol1AndProtocol2AndProtocol3AndProtocol4
+                }
+                """
+            }
+        }
+
+        @Test func `Composition type eraser with overloaded commutativity`() {
+            assertMacro {
+                """
+                #compositionTypeEraser<
+                    any Protocol1,
+                    any Protocol2,
+                    any Protocol3,
+                    any Protocol4,
+                    any Protocol5,
+                    any Protocol6,
+                    any Protocol7
+                >
+                """
+            } diagnostics: {
+                """
+                #compositionTypeEraser<
+                ╰─ ⚠️ Commutativity overloaded, automatically disabled commutativity
+                    any Protocol1,
+                    any Protocol2,
+                    any Protocol3,
+                    any Protocol4,
+                    any Protocol5,
+                    any Protocol6,
+                    any Protocol7
+                >
+                """
+            } expansion: {
+                """
+                struct AnyProtocol1AndProtocol2AndProtocol3AndProtocol4AndProtocol5AndProtocol6AndProtocol7: TypeEraser, ErasedProtocol1, ErasedProtocol2, ErasedProtocol3, ErasedProtocol4, ErasedProtocol5, ErasedProtocol6, ErasedProtocol7 {
+                    /// The value wrapped by this instance.
+                    var base: any Protocol1 & Protocol2 & Protocol3 & Protocol4 & Protocol5 & Protocol6 & Protocol7
+                    /// Create an instance that type-erases `Protocol1&Protocol2&Protocol3&Protocol4&Protocol5&Protocol6&Protocol7`.
+                    init(_ erasing: some Protocol1 & Protocol2 & Protocol3 & Protocol4 & Protocol5 & Protocol6 & Protocol7) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol1&Protocol2&Protocol3&Protocol4&Protocol5&Protocol6&Protocol7`.
+                    init(erasing: any Protocol1 & Protocol2 & Protocol3 & Protocol4 & Protocol5 & Protocol6 & Protocol7) {
+                        self.base = erasing
+                    }
+                }
+                """
+            }
+        }
+
+        @Test func `Composition type eraser with disableCommutativity flag`() {
+            assertMacro {
+                """
+                #compositionTypeEraser<any Protocol1, any Protocol2>(options: [.disableCommutativity])
+                #compositionTypeEraser<any Protocol1, any Protocol2, any Protocol3>(options: [.disableCommutativity])
+                #compositionTypeEraser<any Protocol1, any Protocol2, any Protocol3, any Protocol4>(options: [.disableCommutativity])
+                """
+            } expansion: {
+                """
+                struct AnyProtocol1AndProtocol2: TypeEraser, ErasedProtocol1, ErasedProtocol2 {
+                    /// The value wrapped by this instance.
+                    var base: any Protocol1 & Protocol2
+                    /// Create an instance that type-erases `Protocol1&Protocol2`.
+                    init(_ erasing: some Protocol1 & Protocol2) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol1&Protocol2`.
+                    init(erasing: any Protocol1 & Protocol2) {
+                        self.base = erasing
+                    }
+                }
+                struct AnyProtocol1AndProtocol2AndProtocol3: TypeEraser, ErasedProtocol1, ErasedProtocol2, ErasedProtocol3 {
+                    /// The value wrapped by this instance.
+                    var base: any Protocol1 & Protocol2 & Protocol3
+                    /// Create an instance that type-erases `Protocol1&Protocol2&Protocol3`.
+                    init(_ erasing: some Protocol1 & Protocol2 & Protocol3) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol1&Protocol2&Protocol3`.
+                    init(erasing: any Protocol1 & Protocol2 & Protocol3) {
+                        self.base = erasing
+                    }
+                }
+                struct AnyProtocol1AndProtocol2AndProtocol3AndProtocol4: TypeEraser, ErasedProtocol1, ErasedProtocol2, ErasedProtocol3, ErasedProtocol4 {
+                    /// The value wrapped by this instance.
+                    var base: any Protocol1 & Protocol2 & Protocol3 & Protocol4
+                    /// Create an instance that type-erases `Protocol1&Protocol2&Protocol3&Protocol4`.
+                    init(_ erasing: some Protocol1 & Protocol2 & Protocol3 & Protocol4) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol1&Protocol2&Protocol3&Protocol4`.
+                    init(erasing: any Protocol1 & Protocol2 & Protocol3 & Protocol4) {
+                        self.base = erasing
+                    }
+                }
+                """
+            }
+        }
+
+        @Test func `Composition type eraser with overloaded commutativity with disableCommutativity flag`() {
+            assertMacro {
+                """
+                #compositionTypeEraser<
+                    any Protocol1,
+                    any Protocol2,
+                    any Protocol3,
+                    any Protocol5,
+                    any Protocol6
+                >(options: [.disableCommutativity])
+                """
+            } expansion: {
+                """
+                struct AnyProtocol1AndProtocol2AndProtocol3AndProtocol5AndProtocol6: TypeEraser, ErasedProtocol1, ErasedProtocol2, ErasedProtocol3, ErasedProtocol5, ErasedProtocol6 {
+                    /// The value wrapped by this instance.
+                    var base: any Protocol1 & Protocol2 & Protocol3 & Protocol5 & Protocol6
+                    /// Create an instance that type-erases `Protocol1&Protocol2&Protocol3&Protocol5&Protocol6`.
+                    init(_ erasing: some Protocol1 & Protocol2 & Protocol3 & Protocol5 & Protocol6) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol1&Protocol2&Protocol3&Protocol5&Protocol6`.
+                    init(erasing: any Protocol1 & Protocol2 & Protocol3 & Protocol5 & Protocol6) {
+                        self.base = erasing
+                    }
+                }
+                """
+            }
+        }
+
+        @Test func `Composition type eraser with non-protocol`() {
+            assertMacro {
+                """
+                #compositionTypeEraser<Struct, any Protocol>
+                """
+            } diagnostics: {
+                """
+                #compositionTypeEraser<Struct, any Protocol>
+                ┬───────────────────────────────────────────
+                ╰─ 🛑 The protocols must be prefixed with 'any'
+                """
+            }
+        }
+    }
+
     struct `Variable Tests` {
         @Test(.tags(.modifiers))
         func `Standard variables with varying modifiers`() {
@@ -168,131 +684,147 @@ struct `Macro Tests` {
                     var variable: Any { get throws(any Error) }
                     var variable: Any { get throws(SomeError) }
                     var variable: Any { get throws(Never) }
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     var variable: Any {
                         get {
                             func variable_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
-                                return base.variable
+                                return implicitCast(localBase.variable)
                             };
-                            return __implicitCast(_openExistential(self.base, do: variable_genericOpen))
+                            return implicitCast(_openExistential(self.base_Protocol, do: variable_genericOpen))
                         }
                     }
                     var variable: Any {
                         get async {
                             func variable_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) async -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
-                                return await base.variable
+                                return await implicitCast(localBase.variable)
                             };
-                            return await __implicitCast(_openExistential(self.base, do: variable_genericOpen))
+                            return await implicitCast(_openExistential(self.base_Protocol, do: variable_genericOpen))
                         }
                     }
                     var variable: Any {
                         get throws {
                             func variable_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) throws -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
                                 do {
-                                    return try base.variable
+                                    return try implicitCast(localBase.variable)
                                 } catch let error {
-                                    throw __implicitCast(error)
+                                    throw implicitCast(error)
                                 }
                             };
-                            return try __implicitCast(_openExistential(self.base, do: variable_genericOpen))
+                            return try _openExistential(self.base_Protocol, do: variable_genericOpen)
                         }
                     }
                     var variable: Any {
                         get async throws {
                             func variable_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) async throws -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
                                 do {
-                                    return try await base.variable
+                                    return try await implicitCast(localBase.variable)
                                 } catch let error {
-                                    throw __implicitCast(error)
+                                    throw implicitCast(error)
                                 }
                             };
-                            return try await __implicitCast(_openExistential(self.base, do: variable_genericOpen))
+                            return try await _openExistential(self.base_Protocol, do: variable_genericOpen)
                         }
                     }
                     var variable: Any {
                         get throws(any Error) {
                             func variable_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) throws(any Error) -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
                                 do {
-                                    return try base.variable
+                                    return try implicitCast(localBase.variable)
                                 } catch let error {
-                                    throw __implicitCast(error)
+                                    throw implicitCast(error)
                                 }
                             };
-                            return try __implicitCast(_openExistential(self.base, do: variable_genericOpen))
+                            return try _openExistential(self.base_Protocol, do: variable_genericOpen)
                         }
                     }
                     var variable: Any {
                         get throws(SomeError) {
                             func variable_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) throws(SomeError) -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
                                 do {
-                                    return try base.variable
+                                    return try implicitCast(localBase.variable)
                                 } catch let error {
-                                    throw __implicitCast(error)
+                                    throw implicitCast(error)
                                 }
                             };
-                            return try __implicitCast(_openExistential(self.base, do: variable_genericOpen))
+                            return try _openExistential(self.base_Protocol, do: variable_genericOpen)
                         }
                     }
                     var variable: Any {
                         get throws(Never) {
                             func variable_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) throws(Never) -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
                                 do {
-                                    return try base.variable
+                                    return try implicitCast(localBase.variable)
                                 } catch let error {
-                                    throw __implicitCast(error)
+                                    throw implicitCast(error)
                                 }
                             };
-                            return try __implicitCast(_openExistential(self.base, do: variable_genericOpen))
+                            return try _openExistential(self.base_Protocol, do: variable_genericOpen)
                         }
                     }
                 }
@@ -312,47 +844,63 @@ struct `Macro Tests` {
                 """
                 protocol Protocol {
                     var variable: Any { get set }
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     var variable: Any {
                         get {
                             func variable_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
-                                return base.variable
+                                return implicitCast(localBase.variable)
                             };
-                            return __implicitCast(_openExistential(self.base, do: variable_genericOpen))
+                            return implicitCast(_openExistential(self.base_Protocol, do: variable_genericOpen))
                         }
                         set {
                             func variable_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                     set {
-                                        self.base = newValue
+                                        self.base_Protocol = newValue
                                     }
                                 };
-                                base.variable = __implicitCast(newValue)
+                                localBase.variable = implicitCast(newValue)
                             };
-                            _openExistential(self.base, do: variable_genericOpen)
+                            _openExistential(self.base_Protocol, do: variable_genericOpen)
                         }
                     }
                 }
@@ -360,34 +908,34 @@ struct `Macro Tests` {
             }
         }
 
-        @Test(.tags(.default))
-        func `Standard variables with default specifiers`() {
+        @Test(.tags(.implementation))
+        func `Standard variables with implementation specifiers`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.external) var variable: Any { get }
-                    @Default(.type(Type.self)) var variable: Any { get }
-                    @Default(.value(1)) var variable: Any { get }
-                    @Default(.error) var variable: Any { get }
+                    @Implementation(.external) var variable: Any { get }
+                    @Implementation(.type(Type.self)) var variable: Any { get }
+                    @Implementation(.value(1)) var variable: Any { get }
+                    @Implementation(.error) var variable: Any { get }
                 }
                 """
             } diagnostics: {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.external) var variable: Any { get }
-                    ┬──────────────────
-                    ╰─ 🛑 Only static requirements can have a default
-                    @Default(.type(Type.self)) var variable: Any { get }
+                    @Implementation(.external) var variable: Any { get }
                     ┬─────────────────────────
-                    ╰─ 🛑 Only static requirements can have a default
-                    @Default(.value(1)) var variable: Any { get }
-                    ┬──────────────────
-                    ╰─ 🛑 Only static requirements can have a default
-                    @Default(.error) var variable: Any { get }
-                    ┬───────────────
-                    ╰─ 🛑 Only static requirements can have a default
+                    ╰─ 🛑 Non-static requirements cannot have an explicit implementation
+                    @Implementation(.type(Type.self)) var variable: Any { get }
+                    ┬────────────────────────────────
+                    ╰─ 🛑 Non-static requirements cannot have an explicit implementation
+                    @Implementation(.value(1)) var variable: Any { get }
+                    ┬─────────────────────────
+                    ╰─ 🛑 Non-static requirements cannot have an explicit implementation
+                    @Implementation(.error) var variable: Any { get }
+                    ┬──────────────────────
+                    ╰─ 🛑 Non-static requirements cannot have an explicit implementation
                 }
                 """
             }
@@ -418,55 +966,71 @@ struct `Macro Tests` {
                     var variable: Any { get throws(any Error) }
                     var variable: Any { get throws(SomeError) }
                     var variable: Any { get throws(Never) }
-
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     var variable: Any {
                         get {
-                            base.variable
+                            base_Protocol.variable
                         }
                     }
                     var variable: Any {
                         get async {
-                            await base.variable
+                            await base_Protocol.variable
                         }
                     }
                     var variable: Any {
                         get throws {
-                            try base.variable
+                            try base_Protocol.variable
                         }
                     }
                     var variable: Any {
                         get async throws {
-                            try await base.variable
+                            try await base_Protocol.variable
                         }
                     }
                     var variable: Any {
                         get throws(any Error) {
-                            try base.variable
+                            try base_Protocol.variable
                         }
                     }
                     var variable: Any {
                         get throws(SomeError) {
-                            try base.variable
+                            try base_Protocol.variable
                         }
                     }
                     var variable: Any {
                         get throws(Never) {
-                            try base.variable
+                            try base_Protocol.variable
                         }
                     }
                 }
@@ -487,28 +1051,44 @@ struct `Macro Tests` {
                 """
                 protocol Protocol {
                     var variable: Any { get set }
-
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     var variable: Any {
                         get {
-                            base.variable
+                            base_Protocol.variable
                         }
                         set {
-                            base.variable = newValue
+                            base_Protocol.variable = newValue
                         }
                     }
                 }
@@ -528,47 +1108,62 @@ struct `Macro Tests` {
             } diagnostics: {
                 """
                 @TypeErased
-                ┬──────────
-                ╰─ 🛑 Type erased protocols can't have static requirements
                 protocol Protocol {
                     static var variable: Any { get }
                 }
+                 ╰─ 🛑 Static requirements of type erased protocols must have an explicit implementation
                 """
             }
         }
 
-        @Test(.tags(.static, .default))
-        func `Static variables without setter with default value`() {
+        @Test(.tags(.static, .implementation))
+        func `Static variables without setter with implementation value`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.value(1)) static var variable: Any { get }
+                    @Implementation(.value(1)) static var variable: Any { get }
                 }
                 """
             } expansion: {
                 """
                 protocol Protocol {
                     static var variable: Any { get }
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     static var variable: Any {
                         get {
-                            __implicitCast(1)
+                            implicitCast(1)
                         }
                     }
                 }
@@ -576,41 +1171,57 @@ struct `Macro Tests` {
             }
         }
 
-        @Test(.tags(.static, .default))
-        func `Static variable with setter and default value`() {
+        @Test(.tags(.static, .implementation))
+        func `Static variable with setter and implementation value`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.value(1)) static var variable: Any { get set }
+                    @Implementation(.value(1)) static var variable: Any { get set }
                 }
                 """
             } expansion: {
                 #"""
                 protocol Protocol {
                     static var variable: Any { get set }
-
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     static var variable: Any {
                         get {
-                            __implicitCast(1)
+                            implicitCast(1)
                         }
                         set {
-                            fatalError("Tried to access static member \(#function) from type eraser")
+                            preconditionFailure("Tried to access static member \(#function) from type eraser")
                         }
                     }
                 }
@@ -618,19 +1229,19 @@ struct `Macro Tests` {
             }
         }
 
-        @Test(.tags(.static, .modifiers, .default))
-        func `Static variables with varying modifiers with default type`() {
+        @Test(.tags(.static, .modifiers, .implementation))
+        func `Static variables with varying modifiers with implementation type`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.type(Type.self)) static var variable: Any { get }
-                    @Default(.type(Type.self)) static var variable: Any { get async }
-                    @Default(.type(Type.self)) static var variable: Any { get throws }
-                    @Default(.type(Type.self)) static var variable: Any { get async throws }
-                    @Default(.type(Type.self)) static var variable: Any { get throws(any Error) }
-                    @Default(.type(Type.self)) static var variable: Any { get throws(URLError) }
-                    @Default(.type(Type.self)) static var variable: Any { get throws(Never) }
+                    @Implementation(.type(Type.self)) static var variable: Any { get }
+                    @Implementation(.type(Type.self)) static var variable: Any { get async }
+                    @Implementation(.type(Type.self)) static var variable: Any { get throws }
+                    @Implementation(.type(Type.self)) static var variable: Any { get async throws }
+                    @Implementation(.type(Type.self)) static var variable: Any { get throws(any Error) }
+                    @Implementation(.type(Type.self)) static var variable: Any { get throws(URLError) }
+                    @Implementation(.type(Type.self)) static var variable: Any { get throws(Never) }
                 }
                 """
             } expansion: {
@@ -643,55 +1254,71 @@ struct `Macro Tests` {
                     static var variable: Any { get throws(any Error) }
                     static var variable: Any { get throws(URLError) }
                     static var variable: Any { get throws(Never) }
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     static var variable: Any {
                         get {
-                            __implicitCast(Type.variable)
+                            implicitCast(Type.variable)
                         }
                     }
                     static var variable: Any {
                         get async {
-                            __implicitCast(Type.variable)
+                            implicitCast(Type.variable)
                         }
                     }
                     static var variable: Any {
                         get throws {
-                            __implicitCast(Type.variable)
+                            implicitCast(Type.variable)
                         }
                     }
                     static var variable: Any {
                         get async throws {
-                            __implicitCast(Type.variable)
+                            implicitCast(Type.variable)
                         }
                     }
                     static var variable: Any {
                         get throws(any Error) {
-                            __implicitCast(Type.variable)
+                            implicitCast(Type.variable)
                         }
                     }
                     static var variable: Any {
                         get throws(URLError) {
-                            __implicitCast(Type.variable)
+                            implicitCast(Type.variable)
                         }
                     }
                     static var variable: Any {
                         get throws(Never) {
-                            __implicitCast(Type.variable)
+                            implicitCast(Type.variable)
                         }
                     }
                 }
@@ -699,41 +1326,57 @@ struct `Macro Tests` {
             }
         }
 
-        @Test(.tags(.static, .default))
-        func `Static variables with default type with setter`() {
+        @Test(.tags(.static, .implementation))
+        func `Static variables with implementation type with setter`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.type(Type.self)) static var variable: Any { get set }
+                    @Implementation(.type(Type.self)) static var variable: Any { get set }
                 }
                 """
             } expansion: {
                 """
                 protocol Protocol {
                     static var variable: Any { get set }
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     static var variable: Any {
                         get {
-                            __implicitCast(Type.variable)
+                            implicitCast(Type.variable)
                         }
                         set {
-                            Type.variable = __implicitCast(newValue)
+                            Type.variable = implicitCast(newValue)
                         }
                     }
                 }
@@ -741,48 +1384,64 @@ struct `Macro Tests` {
             }
         }
 
-        @Test(.tags(.static, .default))
-        func `Static variables with external default`() {
+        @Test(.tags(.static, .implementation))
+        func `Static variables with external implementation`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.external) static var variable: Any { get }
+                    @Implementation(.external) static var variable: Any { get }
                 }
                 """
             } expansion: {
                 """
                 protocol Protocol {
                     static var variable: Any { get }
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                 }
                 """
             }
         }
 
-        @Test(.tags(.static, .default))
-        func `Static variables with no default`() {
+        @Test(.tags(.static, .implementation))
+        func `Static variables with no implementation`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.error) static var variable: Any { get }
-                    @Default(.error) static var variable: Any { get set }
+                    @Implementation(.error) static var variable: Any { get }
+                    @Implementation(.error) static var variable: Any { get set }
                 }
                 """
             } expansion: {
@@ -790,33 +1449,49 @@ struct `Macro Tests` {
                 protocol Protocol {
                     static var variable: Any { get }
                     static var variable: Any { get set }
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
                     }
-                    static var variable: Any {
-                        get {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
                     }
-                    static var variable: Any {
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
                         get {
-                            fatalError("Tried to access static member \(#function) from type eraser")
+                            base as! any Protocol
                         }
                         set {
-                            fatalError("Tried to access static member \(#function) from type eraser")
+                            base = newValue as! _Base_
+                        }
+                    }
+                    static var variable: Any {
+                        get {
+                            preconditionFailure("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                    static var variable: Any {
+                        get {
+                            preconditionFailure("Tried to access static member \(#function) from type eraser")
+                        }
+                        set {
+                            preconditionFailure("Tried to access static member \(#function) from type eraser")
                         }
                     }
                 }
@@ -829,139 +1504,36 @@ struct `Macro Tests` {
                 """
                 @TypeErased(options: .exportStaticToObjectLevel)
                 protocol Protocol {
-                    @Default(.error) static var variable: Any { get }
-                    @Default(.error) static var variable: Any { get set }
-                    @Default(.error) static var variable: Any { get async }
-                    @Default(.error) static var variable: Any { get throws }
-                    @Default(.error) static var variable: Any { get async throws }
-                    @Default(.error) static var variable: Any { get throws(any Error) }
-                    @Default(.error) static var variable: Any { get throws(SomeError) }
-                    @Default(.error) static var variable: Any { get throws(Never) }
+                    @Implementation(.error) static var variable: Any { get }
+                    @Implementation(.error) static var variable: Any { get set }
+                    @Implementation(.error) static var variable: Any { get async }
+                    @Implementation(.error) static var variable: Any { get throws }
+                    @Implementation(.error) static var variable: Any { get async throws }
+                    @Implementation(.error) static var variable: Any { get throws(any Error) }
+                    @Implementation(.error) static var variable: Any { get throws(SomeError) }
+                    @Implementation(.error) static var variable: Any { get throws(Never) }
                 }
                 """
-            } expansion: {
-                #"""
+            } diagnostics: {
+                """
+                @TypeErased(options: .exportStaticToObjectLevel)
+                ┬───────────────────────────────────────────────
+                ╰─ 🛑 Internal error: No options match
                 protocol Protocol {
-                    static var variable: Any { get }
-                    static var variable: Any { get set }
-                    static var variable: Any { get async }
-                    static var variable: Any { get throws }
-                    static var variable: Any { get async throws }
-                    static var variable: Any { get throws(any Error) }
-                    static var variable: Any { get throws(SomeError) }
-                    static var variable: Any { get throws(Never) }
-
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
+                    @Implementation(.error) static var variable: Any { get }
+                    @Implementation(.error) static var variable: Any { get set }
+                    @Implementation(.error) static var variable: Any { get async }
+                    @Implementation(.error) static var variable: Any { get throws }
+                    @Implementation(.error) static var variable: Any { get async throws }
+                    @Implementation(.error) static var variable: Any { get throws(any Error) }
+                    @Implementation(.error) static var variable: Any { get throws(SomeError) }
+                    @Implementation(.error) static var variable: Any { get throws(Never) }
                 }
-
-                struct AnyProtocol: Protocol, TypeEraser {
-                    /// The value wrapped by this instance.
-                    var base: any Protocol
-                    /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
-                        self.base = erasing
-                    }
-                    /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
-                        self.base = erasing
-                    }
-                    static var variable: Any {
-                        get {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static var variable: Any {
-                        get {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                        set {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static var variable: Any {
-                        get async {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static var variable: Any {
-                        get throws {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static var variable: Any {
-                        get async throws {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static var variable: Any {
-                        get throws(any Error) {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static var variable: Any {
-                        get throws(SomeError) {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static var variable: Any {
-                        get throws(Never) {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                }
-
-                extension Protocol {
-                    var variable: Any {
-                        get {
-                            __implicitCast(Self.variable)
-                        }
-                    }
-                    var variable: Any {
-                        get {
-                            __implicitCast(Self.variable)
-                        }
-                        set {
-                            Self.variable = __implicitCast(newValue)
-                        }
-                    }
-                    var variable: Any {
-                        get async {
-                            await __implicitCast(Self.variable)
-                        }
-                    }
-                    var variable: Any {
-                        get throws {
-                            try __implicitCast(Self.variable)
-                        }
-                    }
-                    var variable: Any {
-                        get async throws {
-                            try await __implicitCast(Self.variable)
-                        }
-                    }
-                    var variable: Any {
-                        get throws(any Error) {
-                            try __implicitCast(Self.variable)
-                        }
-                    }
-                    var variable: Any {
-                        get throws(SomeError) {
-                            try __implicitCast(Self.variable)
-                        }
-                    }
-                    var variable: Any {
-                        get throws(Never) {
-                            try __implicitCast(Self.variable)
-                        }
-                    }
-                }
-                """#
+                """
             }
         }
     }
 
-    @Suite
     struct `Function Tests` {
         @Test(.tags(.parameters))
         func `Standard functions with varying parameter and input labels`() {
@@ -988,98 +1560,114 @@ struct `Macro Tests` {
                     func function(_ input: Any)
                     func function(label _: Any)
                     func function(_ _: Any)
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     func function() {
                         func function_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Void {
-                            var base: _OpenBase_ {
+                            var localBase: _OpenBase_ {
                                 get {
-                                    self.base as! _OpenBase_
+                                    self.base_Protocol as! _OpenBase_
                                 }
                             };
-                            return base.function()
+                            return implicitCast(localBase.function())
                         };
-                        return __implicitCast(_openExistential(self.base, do: function_genericOpen))
+                        return implicitCast(_openExistential(self.base_Protocol, do: function_genericOpen))
                     }
                     func function(label: Any) {
                         func function_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Void {
-                            var base: _OpenBase_ {
+                            var localBase: _OpenBase_ {
                                 get {
-                                    self.base as! _OpenBase_
+                                    self.base_Protocol as! _OpenBase_
                                 }
                             };
-                            return base.function(label: __implicitCast(label))
+                            return implicitCast(localBase.function(label: implicitCast(label)))
                         };
-                        return __implicitCast(_openExistential(self.base, do: function_genericOpen))
+                        return implicitCast(_openExistential(self.base_Protocol, do: function_genericOpen))
                     }
                     func function(_ param0: Any) {
                         func function_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Void {
-                            var base: _OpenBase_ {
+                            var localBase: _OpenBase_ {
                                 get {
-                                    self.base as! _OpenBase_
+                                    self.base_Protocol as! _OpenBase_
                                 }
                             };
-                            return base.function(__implicitCast(param0))
+                            return implicitCast(localBase.function(implicitCast(param0)))
                         };
-                        return __implicitCast(_openExistential(self.base, do: function_genericOpen))
+                        return implicitCast(_openExistential(self.base_Protocol, do: function_genericOpen))
                     }
                     func function(label input: Any) {
                         func function_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Void {
-                            var base: _OpenBase_ {
+                            var localBase: _OpenBase_ {
                                 get {
-                                    self.base as! _OpenBase_
+                                    self.base_Protocol as! _OpenBase_
                                 }
                             };
-                            return base.function(label: __implicitCast(input))
+                            return implicitCast(localBase.function(label: implicitCast(input)))
                         };
-                        return __implicitCast(_openExistential(self.base, do: function_genericOpen))
+                        return implicitCast(_openExistential(self.base_Protocol, do: function_genericOpen))
                     }
                     func function(_ input: Any) {
                         func function_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Void {
-                            var base: _OpenBase_ {
+                            var localBase: _OpenBase_ {
                                 get {
-                                    self.base as! _OpenBase_
+                                    self.base_Protocol as! _OpenBase_
                                 }
                             };
-                            return base.function(__implicitCast(input))
+                            return implicitCast(localBase.function(implicitCast(input)))
                         };
-                        return __implicitCast(_openExistential(self.base, do: function_genericOpen))
+                        return implicitCast(_openExistential(self.base_Protocol, do: function_genericOpen))
                     }
                     func function(label _: Any) {
                         func function_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Void {
-                            var base: _OpenBase_ {
+                            var localBase: _OpenBase_ {
                                 get {
-                                    self.base as! _OpenBase_
+                                    self.base_Protocol as! _OpenBase_
                                 }
                             };
-                            return base.function(label: __implicitCast(label))
+                            return implicitCast(localBase.function(label: implicitCast(label)))
                         };
-                        return __implicitCast(_openExistential(self.base, do: function_genericOpen))
+                        return implicitCast(_openExistential(self.base_Protocol, do: function_genericOpen))
                     }
                     func function(_ param0: Any) {
                         func function_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Void {
-                            var base: _OpenBase_ {
+                            var localBase: _OpenBase_ {
                                 get {
-                                    self.base as! _OpenBase_
+                                    self.base_Protocol as! _OpenBase_
                                 }
                             };
-                            return base.function(__implicitCast(param0))
+                            return implicitCast(localBase.function(implicitCast(param0)))
                         };
-                        return __implicitCast(_openExistential(self.base, do: function_genericOpen))
+                        return implicitCast(_openExistential(self.base_Protocol, do: function_genericOpen))
                     }
                 }
                 """
@@ -1109,137 +1697,153 @@ struct `Macro Tests` {
                     func function() throws(any Error)
                     func function() throws(SomeError)
                     func function() throws(Never)
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     func function() async {
                         func function_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) async -> Void {
-                            var base: _OpenBase_ {
+                            var localBase: _OpenBase_ {
                                 get {
-                                    self.base as! _OpenBase_
+                                    self.base_Protocol as! _OpenBase_
                                 }
                             };
-                            return await base.function()
+                            return await implicitCast(localBase.function())
                         };
-                        return await __implicitCast(_openExistential(self.base, do: function_genericOpen))
+                        return await implicitCast(_openExistential(self.base_Protocol, do: function_genericOpen))
                     }
                     func function() throws {
                         func function_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) throws -> Void {
-                            var base: _OpenBase_ {
+                            var localBase: _OpenBase_ {
                                 get {
-                                    self.base as! _OpenBase_
+                                    self.base_Protocol as! _OpenBase_
                                 }
                             };
                             do {
-                                return try base.function()
+                                return try implicitCast(localBase.function())
                             } catch let error {
-                                throw __implicitCast(error)
+                                throw implicitCast(error)
                             }
                         };
-                        return try __implicitCast(_openExistential(self.base, do: function_genericOpen))
+                        return try implicitCast(_openExistential(self.base_Protocol, do: function_genericOpen))
                     }
                     func function() async throws {
                         func function_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) async throws -> Void {
-                            var base: _OpenBase_ {
+                            var localBase: _OpenBase_ {
                                 get {
-                                    self.base as! _OpenBase_
+                                    self.base_Protocol as! _OpenBase_
                                 }
                             };
                             do {
-                                return try await base.function()
+                                return try await implicitCast(localBase.function())
                             } catch let error {
-                                throw __implicitCast(error)
+                                throw implicitCast(error)
                             }
                         };
-                        return try await __implicitCast(_openExistential(self.base, do: function_genericOpen))
+                        return try await implicitCast(_openExistential(self.base_Protocol, do: function_genericOpen))
                     }
                     func function() throws(any Error) {
                         func function_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) throws(any Error) -> Void {
-                            var base: _OpenBase_ {
+                            var localBase: _OpenBase_ {
                                 get {
-                                    self.base as! _OpenBase_
+                                    self.base_Protocol as! _OpenBase_
                                 }
                             };
                             do {
-                                return try base.function()
+                                return try implicitCast(localBase.function())
                             } catch let error {
-                                throw __implicitCast(error)
+                                throw implicitCast(error)
                             }
                         };
-                        return try __implicitCast(_openExistential(self.base, do: function_genericOpen))
+                        return try implicitCast(_openExistential(self.base_Protocol, do: function_genericOpen))
                     }
                     func function() throws(SomeError) {
                         func function_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) throws(SomeError) -> Void {
-                            var base: _OpenBase_ {
+                            var localBase: _OpenBase_ {
                                 get {
-                                    self.base as! _OpenBase_
+                                    self.base_Protocol as! _OpenBase_
                                 }
                             };
                             do {
-                                return try base.function()
+                                return try implicitCast(localBase.function())
                             } catch let error {
-                                throw __implicitCast(error)
+                                throw implicitCast(error)
                             }
                         };
-                        return try __implicitCast(_openExistential(self.base, do: function_genericOpen))
+                        return try implicitCast(_openExistential(self.base_Protocol, do: function_genericOpen))
                     }
                     func function() throws(Never) {
                         func function_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) throws(Never) -> Void {
-                            var base: _OpenBase_ {
+                            var localBase: _OpenBase_ {
                                 get {
-                                    self.base as! _OpenBase_
+                                    self.base_Protocol as! _OpenBase_
                                 }
                             };
-                            return base.function()
+                            return implicitCast(localBase.function())
                         };
-                        return __implicitCast(_openExistential(self.base, do: function_genericOpen))
+                        return implicitCast(_openExistential(self.base_Protocol, do: function_genericOpen))
                     }
                 }
                 """
             }
         }
 
-        @Test(.tags(.default))
-        func `Standard functions with default specifiers`() {
+        @Test(.tags(.implementation))
+        func `Standard functions with implementation specifiers`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.external) func function() -> Any
-                    @Default(.type(Type.self)) func function() -> Any
-                    @Default(.value(1)) func function() -> Any
-                    @Default(.error) func function() -> Any
+                    @Implementation(.external) func function() -> Any
+                    @Implementation(.type(Type.self)) func function() -> Any
+                    @Implementation(.value(1)) func function() -> Any
+                    @Implementation(.error) func function() -> Any
                 }
                 """
             } diagnostics: {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.external) func function() -> Any
-                    ┬──────────────────
-                    ╰─ 🛑 Only static requirements can have a default
-                    @Default(.type(Type.self)) func function() -> Any
+                    @Implementation(.external) func function() -> Any
                     ┬─────────────────────────
-                    ╰─ 🛑 Only static requirements can have a default
-                    @Default(.value(1)) func function() -> Any
-                    ┬──────────────────
-                    ╰─ 🛑 Only static requirements can have a default
-                    @Default(.error) func function() -> Any
-                    ┬───────────────
-                    ╰─ 🛑 Only static requirements can have a default
+                    ╰─ 🛑 Non-static requirements cannot have an explicit implementation
+                    @Implementation(.type(Type.self)) func function() -> Any
+                    ┬────────────────────────────────
+                    ╰─ 🛑 Non-static requirements cannot have an explicit implementation
+                    @Implementation(.value(1)) func function() -> Any
+                    ┬─────────────────────────
+                    ╰─ 🛑 Non-static requirements cannot have an explicit implementation
+                    @Implementation(.error) func function() -> Any
+                    ┬──────────────────────
+                    ╰─ 🛑 Non-static requirements cannot have an explicit implementation
                 }
                 """
             }
@@ -1270,42 +1874,58 @@ struct `Macro Tests` {
                     func function(_ input: Any)
                     func function(label _: Any)
                     func function(_ _: Any)
-
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     func function() {
-                        base.function()
+                        base_Protocol.function()
                     }
                     func function(label: Any) {
-                        base.function(label: label)
+                        base_Protocol.function(label: label)
                     }
                     func function(_ param0: Any) {
-                        base.function(param0)
+                        base_Protocol.function(param0)
                     }
                     func function(label input: Any) {
-                        base.function(label: input)
+                        base_Protocol.function(label: input)
                     }
                     func function(_ input: Any) {
-                        base.function(input)
+                        base_Protocol.function(input)
                     }
                     func function(label _: Any) {
-                        base.function(label: label)
+                        base_Protocol.function(label: label)
                     }
                     func function(_ param0: Any) {
-                        base.function(param0)
+                        base_Protocol.function(param0)
                     }
                 }
                 """
@@ -1335,39 +1955,55 @@ struct `Macro Tests` {
                     func function() throws(any Error)
                     func function() throws(SomeError)
                     func function() throws(Never)
-
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     func function() async {
-                        await base.function()
+                        await base_Protocol.function()
                     }
                     func function() throws {
-                        try base.function()
+                        try base_Protocol.function()
                     }
                     func function() async throws {
-                        try await base.function()
+                        try await base_Protocol.function()
                     }
                     func function() throws(any Error) {
-                        try base.function()
+                        try base_Protocol.function()
                     }
                     func function() throws(SomeError) {
-                        try base.function()
+                        try base_Protocol.function()
                     }
                     func function() throws(Never) {
-                        base.function()
+                        base_Protocol.function()
                     }
                 }
                 """
@@ -1386,65 +2022,80 @@ struct `Macro Tests` {
             } diagnostics: {
                 """
                 @TypeErased
-                ┬──────────
-                ╰─ 🛑 Type erased protocols can't have static requirements
                 protocol Protocol {
                     static func function()
                 }
+                 ╰─ 🛑 Static requirements of type erased protocols must have an explicit implementation
                 """
             }
         }
 
-        @Test(.tags(.static, .default))
-        func `Static function with default value`() {
+        @Test(.tags(.static, .implementation))
+        func `Static function with implementation value`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.value(1)) static func function() -> Any
+                    @Implementation(.value(1)) static func function() -> Any
                 }
                 """
             } expansion: {
                 """
                 protocol Protocol {
                     static func function() -> Any
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     static func function() -> Any {
-                        __implicitCast(1)
+                        implicitCast(1)
                     }
                 }
                 """
             }
         }
 
-        @Test(.tags(.static, .parameters, .default))
-        func `Static function with default type with varying parameter and input labels`() {
+        @Test(.tags(.static, .parameters, .implementation))
+        func `Static function with implementation type with varying parameter and input labels`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.type(Type.self)) static func function()
-                    @Default(.type(Type.self)) static func function(label: Any)
-                    @Default(.type(Type.self)) static func function(_: Any)
-                    @Default(.type(Type.self)) static func function(label input: Any)
-                    @Default(.type(Type.self)) static func function(_ input: Any)
-                    @Default(.type(Type.self)) static func function(label _: Any)
-                    @Default(.type(Type.self)) static func function(_ _: Any)
+                    @Implementation(.type(Type.self)) static func function()
+                    @Implementation(.type(Type.self)) static func function(label: Any)
+                    @Implementation(.type(Type.self)) static func function(_: Any)
+                    @Implementation(.type(Type.self)) static func function(label input: Any)
+                    @Implementation(.type(Type.self)) static func function(_ input: Any)
+                    @Implementation(.type(Type.self)) static func function(label _: Any)
+                    @Implementation(.type(Type.self)) static func function(_ _: Any)
                 }
                 """
             } expansion: {
@@ -1457,60 +2108,76 @@ struct `Macro Tests` {
                     static func function(_ input: Any)
                     static func function(label _: Any)
                     static func function(_ _: Any)
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     static func function() {
-                        __implicitCast(Type.function())
+                        implicitCast(Type.function())
                     }
                     static func function(label: Any) {
-                        __implicitCast(Type.function(label: __implicitCast(label)))
+                        implicitCast(Type.function(label: implicitCast(label)))
                     }
                     static func function(_ param0: Any) {
-                        __implicitCast(Type.function(__implicitCast(param0)))
+                        implicitCast(Type.function(implicitCast(param0)))
                     }
                     static func function(label input: Any) {
-                        __implicitCast(Type.function(label: __implicitCast(input)))
+                        implicitCast(Type.function(label: implicitCast(input)))
                     }
                     static func function(_ input: Any) {
-                        __implicitCast(Type.function(__implicitCast(input)))
+                        implicitCast(Type.function(implicitCast(input)))
                     }
                     static func function(label _: Any) {
-                        __implicitCast(Type.function(label: __implicitCast(label)))
+                        implicitCast(Type.function(label: implicitCast(label)))
                     }
                     static func function(_ param0: Any) {
-                        __implicitCast(Type.function(__implicitCast(param0)))
+                        implicitCast(Type.function(implicitCast(param0)))
                     }
                 }
                 """
             }
         }
 
-        @Test(.tags(.static, .modifiers, .default))
-        func `Static function with default type with varying modifiers`() {
+        @Test(.tags(.static, .modifiers, .implementation))
+        func `Static function with implementation type with varying modifiers`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.type(Type.self)) static func function() async
-                    @Default(.type(Type.self)) static func function() throws
-                    @Default(.type(Type.self)) static func function() async throws
-                    @Default(.type(Type.self)) static func function() throws(any Error)
-                    @Default(.type(Type.self)) static func function() throws(SomeError)
-                    @Default(.type(Type.self)) static func function() throws(Never)
+                    @Implementation(.type(Type.self)) static func function() async
+                    @Implementation(.type(Type.self)) static func function() throws
+                    @Implementation(.type(Type.self)) static func function() async throws
+                    @Implementation(.type(Type.self)) static func function() throws(any Error)
+                    @Implementation(.type(Type.self)) static func function() throws(SomeError)
+                    @Implementation(.type(Type.self)) static func function() throws(Never)
                 }
                 """
             } expansion: {
@@ -1522,110 +2189,158 @@ struct `Macro Tests` {
                     static func function() throws(any Error)
                     static func function() throws(SomeError)
                     static func function() throws(Never)
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     static func function() async {
-                        await __implicitCast(Type.function())
+                        await implicitCast(Type.function())
                     }
                     static func function() throws {
-                        try __implicitCast(Type.function())
+                        try implicitCast(Type.function())
                     }
                     static func function() async throws {
-                        try await __implicitCast(Type.function())
+                        try await implicitCast(Type.function())
                     }
                     static func function() throws(any Error) {
-                        try __implicitCast(Type.function())
+                        try implicitCast(Type.function())
                     }
                     static func function() throws(SomeError) {
-                        try __implicitCast(Type.function())
+                        try implicitCast(Type.function())
                     }
                     static func function() throws(Never) {
-                        __implicitCast(Type.function())
+                        implicitCast(Type.function())
                     }
                 }
                 """
             }
         }
 
-        @Test(.tags(.static, .default))
-        func `Static function with external default`() {
+        @Test(.tags(.static, .implementation))
+        func `Static function with external implementation`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.external) static func function()
+                    @Implementation(.external) static func function()
                 }
                 """
             } expansion: {
                 """
                 protocol Protocol {
                     static func function()
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                 }
                 """
             }
         }
 
-        @Test(.tags(.static, .default))
-        func `Static function with no default`() {
+        @Test(.tags(.static, .implementation))
+        func `Static function with no implementation`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.error) static func function()
+                    @Implementation(.error) static func function()
                 }
                 """
             } expansion: {
                 #"""
                 protocol Protocol {
                     static func function()
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     static func function() {
-                        fatalError("Tried to access static member \(#function) from type eraser")
+                        preconditionFailure("Tried to access static member \(#function) from type eraser")
                     }
                 }
                 """#
@@ -1638,80 +2353,28 @@ struct `Macro Tests` {
                 """
                 @TypeErased(options: .exportStaticToObjectLevel)
                 protocol Protocol {
-                    @Default(.error) static func function() async
-                    @Default(.error) static func function() throws
-                    @Default(.error) static func function() async throws
-                    @Default(.error) static func function() throws(any Error)
-                    @Default(.error) static func function() throws(SomeError)
-                    @Default(.error) static func function() throws(Never)
+                    @Implementation(.error) static func function() async
+                    @Implementation(.error) static func function() throws
+                    @Implementation(.error) static func function() async throws
+                    @Implementation(.error) static func function() throws(any Error)
+                    @Implementation(.error) static func function() throws(SomeError)
+                    @Implementation(.error) static func function() throws(Never)
                 }
                 """
-            } expansion: {
-                #"""
+            } diagnostics: {
+                """
+                @TypeErased(options: .exportStaticToObjectLevel)
+                ┬───────────────────────────────────────────────
+                ╰─ 🛑 Internal error: No options match
                 protocol Protocol {
-                    static func function() async
-                    static func function() throws
-                    static func function() async throws
-                    static func function() throws(any Error)
-                    static func function() throws(SomeError)
-                    static func function() throws(Never)
-
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
+                    @Implementation(.error) static func function() async
+                    @Implementation(.error) static func function() throws
+                    @Implementation(.error) static func function() async throws
+                    @Implementation(.error) static func function() throws(any Error)
+                    @Implementation(.error) static func function() throws(SomeError)
+                    @Implementation(.error) static func function() throws(Never)
                 }
-
-                struct AnyProtocol: Protocol, TypeEraser {
-                    /// The value wrapped by this instance.
-                    var base: any Protocol
-                    /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
-                        self.base = erasing
-                    }
-                    /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
-                        self.base = erasing
-                    }
-                    static func function() async {
-                        fatalError("Tried to access static member \(#function) from type eraser")
-                    }
-                    static func function() throws {
-                        fatalError("Tried to access static member \(#function) from type eraser")
-                    }
-                    static func function() async throws {
-                        fatalError("Tried to access static member \(#function) from type eraser")
-                    }
-                    static func function() throws(any Error) {
-                        fatalError("Tried to access static member \(#function) from type eraser")
-                    }
-                    static func function() throws(SomeError) {
-                        fatalError("Tried to access static member \(#function) from type eraser")
-                    }
-                    static func function() throws(Never) {
-                        fatalError("Tried to access static member \(#function) from type eraser")
-                    }
-                }
-
-                extension Protocol {
-                    func function() async {
-                        await __implicitCast(Self.function())
-                    }
-                    func function() throws {
-                        try __implicitCast(Self.function())
-                    }
-                    func function() async throws {
-                        try await __implicitCast(Self.function())
-                    }
-                    func function() throws(any Error) {
-                        try __implicitCast(Self.function())
-                    }
-                    func function() throws(SomeError) {
-                        try __implicitCast(Self.function())
-                    }
-                    func function() throws(Never) {
-                        __implicitCast(Self.function())
-                    }
-                }
-                """#
+                """
             }
         }
 
@@ -1721,93 +2384,34 @@ struct `Macro Tests` {
                 """
                 @TypeErased(options: .exportStaticToObjectLevel)
                 protocol Protocol {
-                    @Default(.error) static func function()
-                    @Default(.error) static func function(label: Any)
-                    @Default(.error) static func function(_: Any)
-                    @Default(.error) static func function(label input: Any)
-                    @Default(.error) static func function(_ input: Any)
-                    @Default(.error) static func function(label _: Any)
-                    @Default(.error) static func function(_ _: Any)
+                    @Implementation(.error) static func function()
+                    @Implementation(.error) static func function(label: Any)
+                    @Implementation(.error) static func function(_: Any)
+                    @Implementation(.error) static func function(label input: Any)
+                    @Implementation(.error) static func function(_ input: Any)
+                    @Implementation(.error) static func function(label _: Any)
+                    @Implementation(.error) static func function(_ _: Any)
                 }
                 """
-            } expansion: {
-                #"""
+            } diagnostics: {
+                """
+                @TypeErased(options: .exportStaticToObjectLevel)
+                ┬───────────────────────────────────────────────
+                ╰─ 🛑 Internal error: No options match
                 protocol Protocol {
-                    static func function()
-                    static func function(label: Any)
-                    static func function(_: Any)
-                    static func function(label input: Any)
-                    static func function(_ input: Any)
-                    static func function(label _: Any)
-                    static func function(_ _: Any)
-
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
+                    @Implementation(.error) static func function()
+                    @Implementation(.error) static func function(label: Any)
+                    @Implementation(.error) static func function(_: Any)
+                    @Implementation(.error) static func function(label input: Any)
+                    @Implementation(.error) static func function(_ input: Any)
+                    @Implementation(.error) static func function(label _: Any)
+                    @Implementation(.error) static func function(_ _: Any)
                 }
-
-                struct AnyProtocol: Protocol, TypeEraser {
-                    /// The value wrapped by this instance.
-                    var base: any Protocol
-                    /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
-                        self.base = erasing
-                    }
-                    /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
-                        self.base = erasing
-                    }
-                    static func function() {
-                        fatalError("Tried to access static member \(#function) from type eraser")
-                    }
-                    static func function(label: Any) {
-                        fatalError("Tried to access static member \(#function) from type eraser")
-                    }
-                    static func function(_ param0: Any) {
-                        fatalError("Tried to access static member \(#function) from type eraser")
-                    }
-                    static func function(label input: Any) {
-                        fatalError("Tried to access static member \(#function) from type eraser")
-                    }
-                    static func function(_ input: Any) {
-                        fatalError("Tried to access static member \(#function) from type eraser")
-                    }
-                    static func function(label _: Any) {
-                        fatalError("Tried to access static member \(#function) from type eraser")
-                    }
-                    static func function(_ param0: Any) {
-                        fatalError("Tried to access static member \(#function) from type eraser")
-                    }
-                }
-
-                extension Protocol {
-                    func function() {
-                        __implicitCast(Self.function())
-                    }
-                    func function(label: Any) {
-                        __implicitCast(Self.function(label: __implicitCast(label)))
-                    }
-                    func function(_ param0: Any) {
-                        __implicitCast(Self.function(__implicitCast(param0)))
-                    }
-                    func function(label input: Any) {
-                        __implicitCast(Self.function(label: __implicitCast(input)))
-                    }
-                    func function(_ input: Any) {
-                        __implicitCast(Self.function(__implicitCast(input)))
-                    }
-                    func function(label _: Any) {
-                        __implicitCast(Self.function(label: __implicitCast(label)))
-                    }
-                    func function(_ param0: Any) {
-                        __implicitCast(Self.function(__implicitCast(param0)))
-                    }
-                }
-                """#
+                """
             }
         }
     }
 
-    @Suite
     struct `Subscript Tests` {
         @Test(.tags(.parameters))
         func `Standard subscripts with varying parameter and input labels without setters`() {
@@ -1834,111 +2438,127 @@ struct `Macro Tests` {
                     subscript(_ input: Any) -> Any { get }
                     subscript(label _: Any) -> Any { get }
                     subscript(_ _: Any) -> Any { get }
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     subscript() -> Any {
                         get {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
-                                return base[]
+                                return implicitCast(localBase[])
                             };
-                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                            return implicitCast(_openExistential(self.base_Protocol, do: subscript_genericOpen))
                         }
                     }
                     subscript(label: Any) -> Any {
                         get {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
-                                return base[__implicitCast(label)]
+                                return implicitCast(localBase[implicitCast(label)])
                             };
-                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                            return implicitCast(_openExistential(self.base_Protocol, do: subscript_genericOpen))
                         }
                     }
                     subscript(_ param0: Any) -> Any {
                         get {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
-                                return base[__implicitCast(param0)]
+                                return implicitCast(localBase[implicitCast(param0)])
                             };
-                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                            return implicitCast(_openExistential(self.base_Protocol, do: subscript_genericOpen))
                         }
                     }
                     subscript(label input: Any) -> Any {
                         get {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
-                                return base[label: __implicitCast(input)]
+                                return implicitCast(localBase[label: implicitCast(input)])
                             };
-                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                            return implicitCast(_openExistential(self.base_Protocol, do: subscript_genericOpen))
                         }
                     }
                     subscript(_ input: Any) -> Any {
                         get {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
-                                return base[__implicitCast(input)]
+                                return implicitCast(localBase[implicitCast(input)])
                             };
-                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                            return implicitCast(_openExistential(self.base_Protocol, do: subscript_genericOpen))
                         }
                     }
                     subscript(label param0: Any) -> Any {
                         get {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
-                                return base[label: __implicitCast(param0)]
+                                return implicitCast(localBase[label: implicitCast(param0)])
                             };
-                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                            return implicitCast(_openExistential(self.base_Protocol, do: subscript_genericOpen))
                         }
                     }
                     subscript(_ param0: Any) -> Any {
                         get {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
-                                return base[__implicitCast(param0)]
+                                return implicitCast(localBase[implicitCast(param0)])
                             };
-                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                            return implicitCast(_openExistential(self.base_Protocol, do: subscript_genericOpen))
                         }
                     }
                 }
@@ -1971,209 +2591,225 @@ struct `Macro Tests` {
                     subscript(_ input: Any) -> Any { get set }
                     subscript(label _: Any) -> Any { get set }
                     subscript(_ _: Any) -> Any { get set }
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     subscript() -> Any {
                         get {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
-                                return base[]
+                                return implicitCast(localBase[])
                             };
-                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                            return implicitCast(_openExistential(self.base_Protocol, do: subscript_genericOpen))
                         }
                         set {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                     set {
-                                        self.base = newValue
+                                        self.base_Protocol = newValue
                                     }
                                 };
-                                return base[] = __implicitCast(newValue)
+                                return localBase[] = implicitCast(newValue)
                             };
-                            _openExistential(self.base, do: subscript_genericOpen)
+                            _openExistential(self.base_Protocol, do: subscript_genericOpen)
                         }
                     }
                     subscript(label: Any) -> Any {
                         get {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
-                                return base[__implicitCast(label)]
+                                return implicitCast(localBase[implicitCast(label)])
                             };
-                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                            return implicitCast(_openExistential(self.base_Protocol, do: subscript_genericOpen))
                         }
                         set {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                     set {
-                                        self.base = newValue
+                                        self.base_Protocol = newValue
                                     }
                                 };
-                                return base[__implicitCast(label)] = __implicitCast(newValue)
+                                return localBase[implicitCast(label)] = implicitCast(newValue)
                             };
-                            _openExistential(self.base, do: subscript_genericOpen)
+                            _openExistential(self.base_Protocol, do: subscript_genericOpen)
                         }
                     }
                     subscript(_ param0: Any) -> Any {
                         get {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
-                                return base[__implicitCast(param0)]
+                                return implicitCast(localBase[implicitCast(param0)])
                             };
-                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                            return implicitCast(_openExistential(self.base_Protocol, do: subscript_genericOpen))
                         }
                         set {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                     set {
-                                        self.base = newValue
+                                        self.base_Protocol = newValue
                                     }
                                 };
-                                return base[__implicitCast(param0)] = __implicitCast(newValue)
+                                return localBase[implicitCast(param0)] = implicitCast(newValue)
                             };
-                            _openExistential(self.base, do: subscript_genericOpen)
+                            _openExistential(self.base_Protocol, do: subscript_genericOpen)
                         }
                     }
                     subscript(label input: Any) -> Any {
                         get {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
-                                return base[label: __implicitCast(input)]
+                                return implicitCast(localBase[label: implicitCast(input)])
                             };
-                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                            return implicitCast(_openExistential(self.base_Protocol, do: subscript_genericOpen))
                         }
                         set {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                     set {
-                                        self.base = newValue
+                                        self.base_Protocol = newValue
                                     }
                                 };
-                                return base[label: __implicitCast(input)] = __implicitCast(newValue)
+                                return localBase[label: implicitCast(input)] = implicitCast(newValue)
                             };
-                            _openExistential(self.base, do: subscript_genericOpen)
+                            _openExistential(self.base_Protocol, do: subscript_genericOpen)
                         }
                     }
                     subscript(_ input: Any) -> Any {
                         get {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
-                                return base[__implicitCast(input)]
+                                return implicitCast(localBase[implicitCast(input)])
                             };
-                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                            return implicitCast(_openExistential(self.base_Protocol, do: subscript_genericOpen))
                         }
                         set {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                     set {
-                                        self.base = newValue
+                                        self.base_Protocol = newValue
                                     }
                                 };
-                                return base[__implicitCast(input)] = __implicitCast(newValue)
+                                return localBase[implicitCast(input)] = implicitCast(newValue)
                             };
-                            _openExistential(self.base, do: subscript_genericOpen)
+                            _openExistential(self.base_Protocol, do: subscript_genericOpen)
                         }
                     }
                     subscript(label param0: Any) -> Any {
                         get {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
-                                return base[label: __implicitCast(param0)]
+                                return implicitCast(localBase[label: implicitCast(param0)])
                             };
-                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                            return implicitCast(_openExistential(self.base_Protocol, do: subscript_genericOpen))
                         }
                         set {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                     set {
-                                        self.base = newValue
+                                        self.base_Protocol = newValue
                                     }
                                 };
-                                return base[label: __implicitCast(param0)] = __implicitCast(newValue)
+                                return localBase[label: implicitCast(param0)] = implicitCast(newValue)
                             };
-                            _openExistential(self.base, do: subscript_genericOpen)
+                            _openExistential(self.base_Protocol, do: subscript_genericOpen)
                         }
                     }
                     subscript(_ param0: Any) -> Any {
                         get {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
-                                return base[__implicitCast(param0)]
+                                return implicitCast(localBase[implicitCast(param0)])
                             };
-                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                            return implicitCast(_openExistential(self.base_Protocol, do: subscript_genericOpen))
                         }
                         set {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                     set {
-                                        self.base = newValue
+                                        self.base_Protocol = newValue
                                     }
                                 };
-                                return base[__implicitCast(param0)] = __implicitCast(newValue)
+                                return localBase[implicitCast(param0)] = implicitCast(newValue)
                             };
-                            _openExistential(self.base, do: subscript_genericOpen)
+                            _openExistential(self.base_Protocol, do: subscript_genericOpen)
                         }
                     }
                 }
@@ -2204,114 +2840,130 @@ struct `Macro Tests` {
                     subscript() -> Any { get throws(any Error) }
                     subscript() -> Any { get throws(SomeError) }
                     subscript() -> Any { get throws(Never) }
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     subscript() -> Any {
                         get async {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) async -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
-                                return await base[]
+                                return await implicitCast(localBase[])
                             };
-                            return await __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                            return await implicitCast(_openExistential(self.base_Protocol, do: subscript_genericOpen))
                         }
                     }
                     subscript() -> Any {
                         get throws {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) throws -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
                                 do {
-                                    return try base[]
+                                    return try implicitCast(localBase[])
                                 } catch let error {
-                                    throw __implicitCast(error)
+                                    throw implicitCast(error)
                                 }
                             };
-                            return try __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                            return try implicitCast(_openExistential(self.base_Protocol, do: subscript_genericOpen))
                         }
                     }
                     subscript() -> Any {
                         get async throws {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) async throws -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
                                 do {
-                                    return try await base[]
+                                    return try await implicitCast(localBase[])
                                 } catch let error {
-                                    throw __implicitCast(error)
+                                    throw implicitCast(error)
                                 }
                             };
-                            return try await __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                            return try await implicitCast(_openExistential(self.base_Protocol, do: subscript_genericOpen))
                         }
                     }
                     subscript() -> Any {
                         get throws(any Error) {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) throws(any Error) -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
                                 do {
-                                    return try base[]
+                                    return try implicitCast(localBase[])
                                 } catch let error {
-                                    throw __implicitCast(error)
+                                    throw implicitCast(error)
                                 }
                             };
-                            return try __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                            return try implicitCast(_openExistential(self.base_Protocol, do: subscript_genericOpen))
                         }
                     }
                     subscript() -> Any {
                         get throws(SomeError) {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) throws(SomeError) -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
                                 do {
-                                    return try base[]
+                                    return try implicitCast(localBase[])
                                 } catch let error {
-                                    throw __implicitCast(error)
+                                    throw implicitCast(error)
                                 }
                             };
-                            return try __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                            return try implicitCast(_openExistential(self.base_Protocol, do: subscript_genericOpen))
                         }
                     }
                     subscript() -> Any {
                         get throws(Never) {
                             func subscript_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) throws(Never) -> Any  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
-                                return base[]
+                                return implicitCast(localBase[])
                             };
-                            return __implicitCast(_openExistential(self.base, do: subscript_genericOpen))
+                            return implicitCast(_openExistential(self.base_Protocol, do: subscript_genericOpen))
                         }
                     }
                 }
@@ -2319,34 +2971,34 @@ struct `Macro Tests` {
             }
         }
 
-        @Test(.tags(.default))
-        func `Standard subscripts with default specifiers`() {
+        @Test(.tags(.implementation))
+        func `Standard subscripts with implementation specifiers`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.external) subscript() -> Any { get }
-                    @Default(.type(Type.self)) subscript() -> Any { get }
-                    @Default(.value(1)) subscript() -> Any { get }
-                    @Default(.error) subscript() -> Any { get }
+                    @Implementation(.external) subscript() -> Any { get }
+                    @Implementation(.type(Type.self)) subscript() -> Any { get }
+                    @Implementation(.value(1)) subscript() -> Any { get }
+                    @Implementation(.error) subscript() -> Any { get }
                 }
                 """
             } diagnostics: {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.external) subscript() -> Any { get }
-                    ┬──────────────────
-                    ╰─ 🛑 Only static requirements can have a default
-                    @Default(.type(Type.self)) subscript() -> Any { get }
+                    @Implementation(.external) subscript() -> Any { get }
                     ┬─────────────────────────
-                    ╰─ 🛑 Only static requirements can have a default
-                    @Default(.value(1)) subscript() -> Any { get }
-                    ┬──────────────────
-                    ╰─ 🛑 Only static requirements can have a default
-                    @Default(.error) subscript() -> Any { get }
-                    ┬───────────────
-                    ╰─ 🛑 Only static requirements can have a default
+                    ╰─ 🛑 Non-static requirements cannot have an explicit implementation
+                    @Implementation(.type(Type.self)) subscript() -> Any { get }
+                    ┬────────────────────────────────
+                    ╰─ 🛑 Non-static requirements cannot have an explicit implementation
+                    @Implementation(.value(1)) subscript() -> Any { get }
+                    ┬─────────────────────────
+                    ╰─ 🛑 Non-static requirements cannot have an explicit implementation
+                    @Implementation(.error) subscript() -> Any { get }
+                    ┬──────────────────────
+                    ╰─ 🛑 Non-static requirements cannot have an explicit implementation
                 }
                 """
             }
@@ -2377,55 +3029,71 @@ struct `Macro Tests` {
                     subscript(_ input: Any) -> Any { get }
                     subscript(label _: Any) -> Any { get }
                     subscript(_ _: Any) -> Any { get }
-
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     subscript() -> Any {
                         get {
-                            base[]
+                            base_Protocol[]
                         }
                     }
                     subscript(label: Any) -> Any {
                         get {
-                            base[label]
+                            base_Protocol[label]
                         }
                     }
                     subscript(_ param0: Any) -> Any {
                         get {
-                            base[param0]
+                            base_Protocol[param0]
                         }
                     }
                     subscript(label input: Any) -> Any {
                         get {
-                            base[label: input]
+                            base_Protocol[label: input]
                         }
                     }
                     subscript(_ input: Any) -> Any {
                         get {
-                            base[input]
+                            base_Protocol[input]
                         }
                     }
                     subscript(label param0: Any) -> Any {
                         get {
-                            base[label: param0]
+                            base_Protocol[label: param0]
                         }
                     }
                     subscript(_ param0: Any) -> Any {
                         get {
-                            base[param0]
+                            base_Protocol[param0]
                         }
                     }
                 }
@@ -2458,76 +3126,92 @@ struct `Macro Tests` {
                     subscript(_ input: Any) -> Any { get set }
                     subscript(label _: Any) -> Any { get set }
                     subscript(_ _: Any) -> Any { get set }
-
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     subscript() -> Any {
                         get {
-                            base[]
+                            base_Protocol[]
                         }
                         set {
-                            base[] = newValue
+                            base_Protocol[] = newValue
                         }
                     }
                     subscript(label: Any) -> Any {
                         get {
-                            base[label]
+                            base_Protocol[label]
                         }
                         set {
-                            base[label] = newValue
+                            base_Protocol[label] = newValue
                         }
                     }
                     subscript(_ param0: Any) -> Any {
                         get {
-                            base[param0]
+                            base_Protocol[param0]
                         }
                         set {
-                            base[param0] = newValue
+                            base_Protocol[param0] = newValue
                         }
                     }
                     subscript(label input: Any) -> Any {
                         get {
-                            base[label: input]
+                            base_Protocol[label: input]
                         }
                         set {
-                            base[label: input] = newValue
+                            base_Protocol[label: input] = newValue
                         }
                     }
                     subscript(_ input: Any) -> Any {
                         get {
-                            base[input]
+                            base_Protocol[input]
                         }
                         set {
-                            base[input] = newValue
+                            base_Protocol[input] = newValue
                         }
                     }
                     subscript(label param0: Any) -> Any {
                         get {
-                            base[label: param0]
+                            base_Protocol[label: param0]
                         }
                         set {
-                            base[label: param0] = newValue
+                            base_Protocol[label: param0] = newValue
                         }
                     }
                     subscript(_ param0: Any) -> Any {
                         get {
-                            base[param0]
+                            base_Protocol[param0]
                         }
                         set {
-                            base[param0] = newValue
+                            base_Protocol[param0] = newValue
                         }
                     }
                 }
@@ -2558,50 +3242,66 @@ struct `Macro Tests` {
                     subscript() -> Any { get throws(any Error) }
                     subscript() -> Any { get throws(SomeError) }
                     subscript() -> Any { get throws(Never) }
-
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     subscript() -> Any {
                         get async {
-                            await base[]
+                            await base_Protocol[]
                         }
                     }
                     subscript() -> Any {
                         get throws {
-                            try base[]
+                            try base_Protocol[]
                         }
                     }
                     subscript() -> Any {
                         get async throws {
-                            try await base[]
+                            try await base_Protocol[]
                         }
                     }
                     subscript() -> Any {
                         get throws(any Error) {
-                            try base[]
+                            try base_Protocol[]
                         }
                     }
                     subscript() -> Any {
                         get throws(SomeError) {
-                            try base[]
+                            try base_Protocol[]
                         }
                     }
                     subscript() -> Any {
                         get throws(Never) {
-                            try base[]
+                            try base_Protocol[]
                         }
                     }
                 }
@@ -2621,47 +3321,62 @@ struct `Macro Tests` {
             } diagnostics: {
                 """
                 @TypeErased
-                ┬──────────
-                ╰─ 🛑 Type erased protocols can't have static requirements
                 protocol Protocol {
                     static subscript() -> Any { get }
                 }
+                 ╰─ 🛑 Static requirements of type erased protocols must have an explicit implementation
                 """
             }
         }
 
-        @Test(.tags(.static, .default))
-        func `Static subscript with default value without setter`() {
+        @Test(.tags(.static, .implementation))
+        func `Static subscript with implementation value without setter`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.value(1)) static subscript() -> Any { get }
+                    @Implementation(.value(1)) static subscript() -> Any { get }
                 }
                 """
             } expansion: {
                 """
                 protocol Protocol {
                     static subscript() -> Any { get }
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     static subscript() -> Any {
                         get {
-                            __implicitCast(1)
+                            implicitCast(1)
                         }
                     }
                 }
@@ -2669,41 +3384,57 @@ struct `Macro Tests` {
             }
         }
 
-        @Test(.tags(.static, .default))
-        func `Static subscript with default value with setter`() {
+        @Test(.tags(.static, .implementation))
+        func `Static subscript with implementation value with setter`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.value(1)) static subscript() -> Any { get set }
+                    @Implementation(.value(1)) static subscript() -> Any { get set }
                 }
                 """
             } expansion: {
                 #"""
                 protocol Protocol {
                     static subscript() -> Any { get set }
-
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     static subscript() -> Any {
                         get {
-                            __implicitCast(1)
+                            implicitCast(1)
                         }
                         set {
-                            fatalError("Tried to access static member \(#function) from type eraser")
+                            preconditionFailure("Tried to access static member \(#function) from type eraser")
                         }
                     }
                 }
@@ -2711,19 +3442,19 @@ struct `Macro Tests` {
             }
         }
 
-        @Test(.tags(.static, .parameters, .default))
-        func `Static subscript with default type with varying parameter and input labels without setters`() {
+        @Test(.tags(.static, .parameters, .implementation))
+        func `Static subscript with implementation type with varying parameter and input labels without setters`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.type(Type.self)) static subscript() -> Any { get }
-                    @Default(.type(Type.self)) static subscript(label: Any) -> Any { get }
-                    @Default(.type(Type.self)) static subscript(_: Any) -> Any { get }
-                    @Default(.type(Type.self)) static subscript(label input: Any) -> Any { get }
-                    @Default(.type(Type.self)) static subscript(_ input: Any) -> Any { get }
-                    @Default(.type(Type.self)) static subscript(label _: Any) -> Any { get }
-                    @Default(.type(Type.self)) static subscript(_ _: Any) -> Any { get }
+                    @Implementation(.type(Type.self)) static subscript() -> Any { get }
+                    @Implementation(.type(Type.self)) static subscript(label: Any) -> Any { get }
+                    @Implementation(.type(Type.self)) static subscript(_: Any) -> Any { get }
+                    @Implementation(.type(Type.self)) static subscript(label input: Any) -> Any { get }
+                    @Implementation(.type(Type.self)) static subscript(_ input: Any) -> Any { get }
+                    @Implementation(.type(Type.self)) static subscript(label _: Any) -> Any { get }
+                    @Implementation(.type(Type.self)) static subscript(_ _: Any) -> Any { get }
                 }
                 """
             } expansion: {
@@ -2736,55 +3467,71 @@ struct `Macro Tests` {
                     static subscript(_ input: Any) -> Any { get }
                     static subscript(label _: Any) -> Any { get }
                     static subscript(_ _: Any) -> Any { get }
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     static subscript() -> Any {
                         get {
-                            __implicitCast(Type[])
+                            implicitCast(Type[])
                         }
                     }
                     static subscript(label: Any) -> Any {
                         get {
-                            __implicitCast(Type[__implicitCast(label)])
+                            implicitCast(Type[implicitCast(label)])
                         }
                     }
                     static subscript(_ param0: Any) -> Any {
                         get {
-                            __implicitCast(Type[__implicitCast(param0)])
+                            implicitCast(Type[implicitCast(param0)])
                         }
                     }
                     static subscript(label input: Any) -> Any {
                         get {
-                            __implicitCast(Type[label: __implicitCast(input)])
+                            implicitCast(Type[label: implicitCast(input)])
                         }
                     }
                     static subscript(_ input: Any) -> Any {
                         get {
-                            __implicitCast(Type[__implicitCast(input)])
+                            implicitCast(Type[implicitCast(input)])
                         }
                     }
                     static subscript(label param0: Any) -> Any {
                         get {
-                            __implicitCast(Type[label: __implicitCast(param0)])
+                            implicitCast(Type[label: implicitCast(param0)])
                         }
                     }
                     static subscript(_ param0: Any) -> Any {
                         get {
-                            __implicitCast(Type[__implicitCast(param0)])
+                            implicitCast(Type[implicitCast(param0)])
                         }
                     }
                 }
@@ -2792,19 +3539,19 @@ struct `Macro Tests` {
             }
         }
 
-        @Test(.tags(.static, .parameters, .default))
-        func `Static subscript with default type with varying parameter and input labels with setters`() {
+        @Test(.tags(.static, .parameters, .implementation))
+        func `Static subscript with implementation type with varying parameter and input labels with setters`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.type(Type.self)) static subscript() -> Any { get set }
-                    @Default(.type(Type.self)) static subscript(label: Any) -> Any { get set }
-                    @Default(.type(Type.self)) static subscript(_: Any) -> Any { get set }
-                    @Default(.type(Type.self)) static subscript(label input: Any) -> Any { get set }
-                    @Default(.type(Type.self)) static subscript(_ input: Any) -> Any { get set }
-                    @Default(.type(Type.self)) static subscript(label _: Any) -> Any { get set }
-                    @Default(.type(Type.self)) static subscript(_ _: Any) -> Any { get set }
+                    @Implementation(.type(Type.self)) static subscript() -> Any { get set }
+                    @Implementation(.type(Type.self)) static subscript(label: Any) -> Any { get set }
+                    @Implementation(.type(Type.self)) static subscript(_: Any) -> Any { get set }
+                    @Implementation(.type(Type.self)) static subscript(label input: Any) -> Any { get set }
+                    @Implementation(.type(Type.self)) static subscript(_ input: Any) -> Any { get set }
+                    @Implementation(.type(Type.self)) static subscript(label _: Any) -> Any { get set }
+                    @Implementation(.type(Type.self)) static subscript(_ _: Any) -> Any { get set }
                 }
                 """
             } expansion: {
@@ -2817,76 +3564,92 @@ struct `Macro Tests` {
                     static subscript(_ input: Any) -> Any { get set }
                     static subscript(label _: Any) -> Any { get set }
                     static subscript(_ _: Any) -> Any { get set }
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     static subscript() -> Any {
                         get {
-                            __implicitCast(Type[])
+                            implicitCast(Type[])
                         }
                         set {
-                            Type[] = __implicitCast(newValue)
+                            Type[] = implicitCast(newValue)
                         }
                     }
                     static subscript(label: Any) -> Any {
                         get {
-                            __implicitCast(Type[__implicitCast(label)])
+                            implicitCast(Type[implicitCast(label)])
                         }
                         set {
-                            Type[__implicitCast(label)] = __implicitCast(newValue)
+                            Type[implicitCast(label)] = implicitCast(newValue)
                         }
                     }
                     static subscript(_ param0: Any) -> Any {
                         get {
-                            __implicitCast(Type[__implicitCast(param0)])
+                            implicitCast(Type[implicitCast(param0)])
                         }
                         set {
-                            Type[__implicitCast(param0)] = __implicitCast(newValue)
+                            Type[implicitCast(param0)] = implicitCast(newValue)
                         }
                     }
                     static subscript(label input: Any) -> Any {
                         get {
-                            __implicitCast(Type[label: __implicitCast(input)])
+                            implicitCast(Type[label: implicitCast(input)])
                         }
                         set {
-                            Type[label: __implicitCast(input)] = __implicitCast(newValue)
+                            Type[label: implicitCast(input)] = implicitCast(newValue)
                         }
                     }
                     static subscript(_ input: Any) -> Any {
                         get {
-                            __implicitCast(Type[__implicitCast(input)])
+                            implicitCast(Type[implicitCast(input)])
                         }
                         set {
-                            Type[__implicitCast(input)] = __implicitCast(newValue)
+                            Type[implicitCast(input)] = implicitCast(newValue)
                         }
                     }
                     static subscript(label param0: Any) -> Any {
                         get {
-                            __implicitCast(Type[label: __implicitCast(param0)])
+                            implicitCast(Type[label: implicitCast(param0)])
                         }
                         set {
-                            Type[label: __implicitCast(param0)] = __implicitCast(newValue)
+                            Type[label: implicitCast(param0)] = implicitCast(newValue)
                         }
                     }
                     static subscript(_ param0: Any) -> Any {
                         get {
-                            __implicitCast(Type[__implicitCast(param0)])
+                            implicitCast(Type[implicitCast(param0)])
                         }
                         set {
-                            Type[__implicitCast(param0)] = __implicitCast(newValue)
+                            Type[implicitCast(param0)] = implicitCast(newValue)
                         }
                     }
                 }
@@ -2894,18 +3657,18 @@ struct `Macro Tests` {
             }
         }
 
-        @Test(.tags(.static, .modifiers, .default))
-        func `Static subscript with default type with varying modifiers`() {
+        @Test(.tags(.static, .modifiers, .implementation))
+        func `Static subscript with implementation type with varying modifiers`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.type(Type.self)) static subscript() -> Any { get async }
-                    @Default(.type(Type.self)) static subscript() -> Any { get throws }
-                    @Default(.type(Type.self)) static subscript() -> Any { get async throws }
-                    @Default(.type(Type.self)) static subscript() -> Any { get throws(any Error) }
-                    @Default(.type(Type.self)) static subscript() -> Any { get throws(SomeError) }
-                    @Default(.type(Type.self)) static subscript() -> Any { get throws(Never) }
+                    @Implementation(.type(Type.self)) static subscript() -> Any { get async }
+                    @Implementation(.type(Type.self)) static subscript() -> Any { get throws }
+                    @Implementation(.type(Type.self)) static subscript() -> Any { get async throws }
+                    @Implementation(.type(Type.self)) static subscript() -> Any { get throws(any Error) }
+                    @Implementation(.type(Type.self)) static subscript() -> Any { get throws(SomeError) }
+                    @Implementation(.type(Type.self)) static subscript() -> Any { get throws(Never) }
                 }
                 """
             } expansion: {
@@ -2917,50 +3680,66 @@ struct `Macro Tests` {
                     static subscript() -> Any { get throws(any Error) }
                     static subscript() -> Any { get throws(SomeError) }
                     static subscript() -> Any { get throws(Never) }
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     static subscript() -> Any {
                         get async {
-                            await __implicitCast(Type[])
+                            await implicitCast(Type[])
                         }
                     }
                     static subscript() -> Any {
                         get throws {
-                            try __implicitCast(Type[])
+                            try implicitCast(Type[])
                         }
                     }
                     static subscript() -> Any {
                         get async throws {
-                            try await __implicitCast(Type[])
+                            try await implicitCast(Type[])
                         }
                     }
                     static subscript() -> Any {
                         get throws(any Error) {
-                            try __implicitCast(Type[])
+                            try implicitCast(Type[])
                         }
                     }
                     static subscript() -> Any {
                         get throws(SomeError) {
-                            try __implicitCast(Type[])
+                            try implicitCast(Type[])
                         }
                     }
                     static subscript() -> Any {
                         get throws(Never) {
-                            try __implicitCast(Type[])
+                            try implicitCast(Type[])
                         }
                     }
                 }
@@ -2968,48 +3747,64 @@ struct `Macro Tests` {
             }
         }
 
-        @Test(.tags(.static, .default))
-        func `Static subscript with external default`() {
+        @Test(.tags(.static, .implementation))
+        func `Static subscript with external implementation`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.external) static subscript() -> Any { get }
+                    @Implementation(.external) static subscript() -> Any { get }
                 }
                 """
             } expansion: {
                 """
                 protocol Protocol {
                     static subscript() -> Any { get }
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                 }
                 """
             }
         }
 
-        @Test(.tags(.static, .default))
-        func `Static subscripts with no default`() {
+        @Test(.tags(.static, .implementation))
+        func `Static subscripts with no implementation`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.error) static subscript() -> Any { get }
-                    @Default(.error) static subscript() -> Any { get set }
+                    @Implementation(.error) static subscript() -> Any { get }
+                    @Implementation(.error) static subscript() -> Any { get set }
                 }
                 """
             } expansion: {
@@ -3017,33 +3812,49 @@ struct `Macro Tests` {
                 protocol Protocol {
                     static subscript() -> Any { get }
                     static subscript() -> Any { get set }
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
                     }
-                    static subscript() -> Any {
-                        get {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
                     }
-                    static subscript() -> Any {
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
                         get {
-                            fatalError("Tried to access static member \(#function) from type eraser")
+                            base as! any Protocol
                         }
                         set {
-                            fatalError("Tried to access static member \(#function) from type eraser")
+                            base = newValue as! _Base_
+                        }
+                    }
+                    static subscript() -> Any {
+                        get {
+                            preconditionFailure("Tried to access static member \(#function) from type eraser")
+                        }
+                    }
+                    static subscript() -> Any {
+                        get {
+                            preconditionFailure("Tried to access static member \(#function) from type eraser")
+                        }
+                        set {
+                            preconditionFailure("Tried to access static member \(#function) from type eraser")
                         }
                     }
                 }
@@ -3057,116 +3868,30 @@ struct `Macro Tests` {
                 """
                 @TypeErased(options: .exportStaticToObjectLevel)
                 protocol Protocol {
-                    @Default(.none) static subscript() -> Any { get }
-                    @Default(.none) static subscript(label: Any) -> Any { get }
-                    @Default(.none) static subscript(_: Any) -> Any { get }
-                    @Default(.none) static subscript(label input: Any) -> Any { get }
-                    @Default(.none) static subscript(_ input: Any) -> Any { get }
-                    @Default(.none) static subscript(label _: Any) -> Any { get }
-                    @Default(.none) static subscript(_ _: Any) -> Any { get }
+                    @Implementation(.none) static subscript() -> Any { get }
+                    @Implementation(.none) static subscript(label: Any) -> Any { get }
+                    @Implementation(.none) static subscript(_: Any) -> Any { get }
+                    @Implementation(.none) static subscript(label input: Any) -> Any { get }
+                    @Implementation(.none) static subscript(_ input: Any) -> Any { get }
+                    @Implementation(.none) static subscript(label _: Any) -> Any { get }
+                    @Implementation(.none) static subscript(_ _: Any) -> Any { get }
                 }
                 """
-            } expansion: {
-                #"""
+            } diagnostics: {
+                """
+                @TypeErased(options: .exportStaticToObjectLevel)
+                ┬───────────────────────────────────────────────
+                ╰─ 🛑 Internal error: No options match
                 protocol Protocol {
-                    static subscript() -> Any { get }
-                    static subscript(label: Any) -> Any { get }
-                    static subscript(_: Any) -> Any { get }
-                    static subscript(label input: Any) -> Any { get }
-                    static subscript(_ input: Any) -> Any { get }
-                    static subscript(label _: Any) -> Any { get }
-                    static subscript(_ _: Any) -> Any { get }
-
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
+                    @Implementation(.none) static subscript() -> Any { get }
+                    @Implementation(.none) static subscript(label: Any) -> Any { get }
+                    @Implementation(.none) static subscript(_: Any) -> Any { get }
+                    @Implementation(.none) static subscript(label input: Any) -> Any { get }
+                    @Implementation(.none) static subscript(_ input: Any) -> Any { get }
+                    @Implementation(.none) static subscript(label _: Any) -> Any { get }
+                    @Implementation(.none) static subscript(_ _: Any) -> Any { get }
                 }
-
-                struct AnyProtocol: Protocol, TypeEraser {
-                    /// The value wrapped by this instance.
-                    var base: any Protocol
-                    /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
-                        self.base = erasing
-                    }
-                    /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
-                        self.base = erasing
-                    }
-                    static subscript() -> Any {
-                        get {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static subscript(label: Any) -> Any {
-                        get {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static subscript(_ param0: Any) -> Any {
-                        get {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static subscript(label input: Any) -> Any {
-                        get {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static subscript(_ input: Any) -> Any {
-                        get {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static subscript(label param0: Any) -> Any {
-                        get {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static subscript(_ param0: Any) -> Any {
-                        get {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                }
-
-                extension Protocol {
-                    subscript() -> Any {
-                        get {
-                            Self[]
-                        }
-                    }
-                    subscript(label: Any) -> Any {
-                        get {
-                            Self[__implicitCast(label)]
-                        }
-                    }
-                    subscript(_ param0: Any) -> Any {
-                        get {
-                            Self[__implicitCast(param0)]
-                        }
-                    }
-                    subscript(label input: Any) -> Any {
-                        get {
-                            Self[label: __implicitCast(input)]
-                        }
-                    }
-                    subscript(_ input: Any) -> Any {
-                        get {
-                            Self[__implicitCast(input)]
-                        }
-                    }
-                    subscript(label param0: Any) -> Any {
-                        get {
-                            Self[label: __implicitCast(param0)]
-                        }
-                    }
-                    subscript(_ param0: Any) -> Any {
-                        get {
-                            Self[__implicitCast(param0)]
-                        }
-                    }
-                }
-                """#
+                """
             }
         }
 
@@ -3176,158 +3901,30 @@ struct `Macro Tests` {
                 """
                 @TypeErased(options: .exportStaticToObjectLevel)
                 protocol Protocol {
-                    @Default(.none) static subscript() -> Any { get set }
-                    @Default(.none) static subscript(label: Any) -> Any { get set }
-                    @Default(.none) static subscript(_: Any) -> Any { get set }
-                    @Default(.none) static subscript(label input: Any) -> Any { get set }
-                    @Default(.none) static subscript(_ input: Any) -> Any { get set }
-                    @Default(.none) static subscript(label _: Any) -> Any { get set }
-                    @Default(.none) static subscript(_ _: Any) -> Any { get set }
+                    @Implementation(.none) static subscript() -> Any { get set }
+                    @Implementation(.none) static subscript(label: Any) -> Any { get set }
+                    @Implementation(.none) static subscript(_: Any) -> Any { get set }
+                    @Implementation(.none) static subscript(label input: Any) -> Any { get set }
+                    @Implementation(.none) static subscript(_ input: Any) -> Any { get set }
+                    @Implementation(.none) static subscript(label _: Any) -> Any { get set }
+                    @Implementation(.none) static subscript(_ _: Any) -> Any { get set }
                 }
                 """
-            } expansion: {
-                #"""
+            } diagnostics: {
+                """
+                @TypeErased(options: .exportStaticToObjectLevel)
+                ┬───────────────────────────────────────────────
+                ╰─ 🛑 Internal error: No options match
                 protocol Protocol {
-                    static subscript() -> Any { get set }
-                    static subscript(label: Any) -> Any { get set }
-                    static subscript(_: Any) -> Any { get set }
-                    static subscript(label input: Any) -> Any { get set }
-                    static subscript(_ input: Any) -> Any { get set }
-                    static subscript(label _: Any) -> Any { get set }
-                    static subscript(_ _: Any) -> Any { get set }
-
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
+                    @Implementation(.none) static subscript() -> Any { get set }
+                    @Implementation(.none) static subscript(label: Any) -> Any { get set }
+                    @Implementation(.none) static subscript(_: Any) -> Any { get set }
+                    @Implementation(.none) static subscript(label input: Any) -> Any { get set }
+                    @Implementation(.none) static subscript(_ input: Any) -> Any { get set }
+                    @Implementation(.none) static subscript(label _: Any) -> Any { get set }
+                    @Implementation(.none) static subscript(_ _: Any) -> Any { get set }
                 }
-
-                struct AnyProtocol: Protocol, TypeEraser {
-                    /// The value wrapped by this instance.
-                    var base: any Protocol
-                    /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
-                        self.base = erasing
-                    }
-                    /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
-                        self.base = erasing
-                    }
-                    static subscript() -> Any {
-                        get {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                        set {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static subscript(label: Any) -> Any {
-                        get {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                        set {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static subscript(_ param0: Any) -> Any {
-                        get {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                        set {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static subscript(label input: Any) -> Any {
-                        get {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                        set {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static subscript(_ input: Any) -> Any {
-                        get {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                        set {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static subscript(label param0: Any) -> Any {
-                        get {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                        set {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static subscript(_ param0: Any) -> Any {
-                        get {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                        set {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                }
-
-                extension Protocol {
-                    subscript() -> Any {
-                        get {
-                            Self[]
-                        }
-                        set {
-                            Self[] = __implicitCast(newValue)
-                        }
-                    }
-                    subscript(label: Any) -> Any {
-                        get {
-                            Self[__implicitCast(label)]
-                        }
-                        set {
-                            Self[__implicitCast(label)] = __implicitCast(newValue)
-                        }
-                    }
-                    subscript(_ param0: Any) -> Any {
-                        get {
-                            Self[__implicitCast(param0)]
-                        }
-                        set {
-                            Self[__implicitCast(param0)] = __implicitCast(newValue)
-                        }
-                    }
-                    subscript(label input: Any) -> Any {
-                        get {
-                            Self[label: __implicitCast(input)]
-                        }
-                        set {
-                            Self[label: __implicitCast(input)] = __implicitCast(newValue)
-                        }
-                    }
-                    subscript(_ input: Any) -> Any {
-                        get {
-                            Self[__implicitCast(input)]
-                        }
-                        set {
-                            Self[__implicitCast(input)] = __implicitCast(newValue)
-                        }
-                    }
-                    subscript(label param0: Any) -> Any {
-                        get {
-                            Self[label: __implicitCast(param0)]
-                        }
-                        set {
-                            Self[label: __implicitCast(param0)] = __implicitCast(newValue)
-                        }
-                    }
-                    subscript(_ param0: Any) -> Any {
-                        get {
-                            Self[__implicitCast(param0)]
-                        }
-                        set {
-                            Self[__implicitCast(param0)] = __implicitCast(newValue)
-                        }
-                    }
-                }
-                """#
+                """
             }
         }
 
@@ -3337,104 +3934,28 @@ struct `Macro Tests` {
                 """
                 @TypeErased(options: .exportStaticToObjectLevel)
                 protocol Protocol {
-                    @Default(.none) static subscript() -> Any { get async }
-                    @Default(.none) static subscript() -> Any { get throws }
-                    @Default(.none) static subscript() -> Any { get async throws }
-                    @Default(.none) static subscript() -> Any { get throws(any Error) }
-                    @Default(.none) static subscript() -> Any { get throws(SomeError) }
-                    @Default(.none) static subscript() -> Any { get throws(Never) }
+                    @Implementation(.none) static subscript() -> Any { get async }
+                    @Implementation(.none) static subscript() -> Any { get throws }
+                    @Implementation(.none) static subscript() -> Any { get async throws }
+                    @Implementation(.none) static subscript() -> Any { get throws(any Error) }
+                    @Implementation(.none) static subscript() -> Any { get throws(SomeError) }
+                    @Implementation(.none) static subscript() -> Any { get throws(Never) }
                 }
                 """
-            } expansion: {
-                #"""
+            } diagnostics: {
+                """
+                @TypeErased(options: .exportStaticToObjectLevel)
+                ┬───────────────────────────────────────────────
+                ╰─ 🛑 Internal error: No options match
                 protocol Protocol {
-                    static subscript() -> Any { get async }
-                    static subscript() -> Any { get throws }
-                    static subscript() -> Any { get async throws }
-                    static subscript() -> Any { get throws(any Error) }
-                    static subscript() -> Any { get throws(SomeError) }
-                    static subscript() -> Any { get throws(Never) }
-
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
+                    @Implementation(.none) static subscript() -> Any { get async }
+                    @Implementation(.none) static subscript() -> Any { get throws }
+                    @Implementation(.none) static subscript() -> Any { get async throws }
+                    @Implementation(.none) static subscript() -> Any { get throws(any Error) }
+                    @Implementation(.none) static subscript() -> Any { get throws(SomeError) }
+                    @Implementation(.none) static subscript() -> Any { get throws(Never) }
                 }
-
-                struct AnyProtocol: Protocol, TypeEraser {
-                    /// The value wrapped by this instance.
-                    var base: any Protocol
-                    /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
-                        self.base = erasing
-                    }
-                    /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
-                        self.base = erasing
-                    }
-                    static subscript() -> Any {
-                        get async {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static subscript() -> Any {
-                        get throws {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static subscript() -> Any {
-                        get async throws {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static subscript() -> Any {
-                        get throws(any Error) {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static subscript() -> Any {
-                        get throws(SomeError) {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                    static subscript() -> Any {
-                        get throws(Never) {
-                            fatalError("Tried to access static member \(#function) from type eraser")
-                        }
-                    }
-                }
-
-                extension Protocol {
-                    subscript() -> Any {
-                        get async {
-                            await Self[]
-                        }
-                    }
-                    subscript() -> Any {
-                        get throws {
-                            try Self[]
-                        }
-                    }
-                    subscript() -> Any {
-                        get async throws {
-                            try await Self[]
-                        }
-                    }
-                    subscript() -> Any {
-                        get throws(any Error) {
-                            try Self[]
-                        }
-                    }
-                    subscript() -> Any {
-                        get throws(SomeError) {
-                            try Self[]
-                        }
-                    }
-                    subscript() -> Any {
-                        get throws(Never) {
-                            try Self[]
-                        }
-                    }
-                }
-                """#
+                """
             }
         }
     }
@@ -3452,28 +3973,27 @@ struct `Macro Tests` {
             } diagnostics: {
                 """
                 @TypeErased
-                ┬──────────
-                ╰─ 🛑 Type erased protocols can't have static requirements
                 protocol Protocol {
                     init()
                 }
+                 ╰─ 🛑 Static requirements of type erased protocols must have an explicit implementation
                 """
             }
         }
 
-        @Test(.tags(.parameters, .default))
-        func `Initializers with default type with varying parameter and input labels`() {
+        @Test(.tags(.parameters, .implementation))
+        func `Initializers with implementation type with varying parameter and input labels`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.type(Type.self)) init()
-                    @Default(.type(Type.self)) init(label: Any)
-                    @Default(.type(Type.self)) init(_: Any)
-                    @Default(.type(Type.self)) init(label input: Any)
-                    @Default(.type(Type.self)) init(_ input: Any)
-                    @Default(.type(Type.self)) init(label _: Any)
-                    @Default(.type(Type.self)) init(_ _: Any)
+                    @Implementation(.type(Type.self)) init()
+                    @Implementation(.type(Type.self)) init(label: Any)
+                    @Implementation(.type(Type.self)) init(_: Any)
+                    @Implementation(.type(Type.self)) init(label input: Any)
+                    @Implementation(.type(Type.self)) init(_ input: Any)
+                    @Implementation(.type(Type.self)) init(label _: Any)
+                    @Implementation(.type(Type.self)) init(_ _: Any)
                 }
                 """
             } expansion: {
@@ -3486,60 +4006,76 @@ struct `Macro Tests` {
                     init(_ input: Any)
                     init(label _: Any)
                     init(_ _: Any)
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     init() {
                         self.init(Type())
                     }
                     init(label: Any) {
-                        self.init(Type(label: __implicitCast(label)))
+                        self.init(Type(label: implicitCast(label)))
                     }
                     init(_ param0: Any) {
-                        self.init(Type(__implicitCast(param0)))
+                        self.init(Type(implicitCast(param0)))
                     }
                     init(label input: Any) {
-                        self.init(Type(label: __implicitCast(input)))
+                        self.init(Type(label: implicitCast(input)))
                     }
                     init(_ input: Any) {
-                        self.init(Type(__implicitCast(input)))
+                        self.init(Type(implicitCast(input)))
                     }
                     init(label _: Any) {
-                        self.init(Type(label: __implicitCast(label)))
+                        self.init(Type(label: implicitCast(label)))
                     }
                     init(_ param0: Any) {
-                        self.init(Type(__implicitCast(param0)))
+                        self.init(Type(implicitCast(param0)))
                     }
                 }
                 """
             }
         }
 
-        @Test(.tags(.modifiers, .default))
-        func `Initializers with default type with varying modifiers`() {
+        @Test(.tags(.modifiers, .implementation))
+        func `Initializers with implementation type with varying modifiers`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.type(Type.self)) init() async
-                    @Default(.type(Type.self)) init() throws
-                    @Default(.type(Type.self)) init() async throws
-                    @Default(.type(Type.self)) init() throws(any Error)
-                    @Default(.type(Type.self)) init() throws(SomeError)
-                    @Default(.type(Type.self)) init() throws(Never)
+                    @Implementation(.type(Type.self)) init() async
+                    @Implementation(.type(Type.self)) init() throws
+                    @Implementation(.type(Type.self)) init() async throws
+                    @Implementation(.type(Type.self)) init() throws(any Error)
+                    @Implementation(.type(Type.self)) init() throws(SomeError)
+                    @Implementation(.type(Type.self)) init() throws(Never)
                 }
                 """
             } expansion: {
@@ -3551,21 +4087,37 @@ struct `Macro Tests` {
                     init() throws(any Error)
                     init() throws(SomeError)
                     init() throws(Never)
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     init() async {
                         await self.init(Type())
@@ -3590,34 +4142,50 @@ struct `Macro Tests` {
             }
         }
 
-        @Test(.tags(.default))
-        func `Optional initializer with default type`() {
+        @Test(.tags(.implementation))
+        func `Optional initializer with implementation type`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.type(Type.self)) init?()
+                    @Implementation(.type(Type.self)) init?()
                 }
                 """
             } expansion: {
                 """
                 protocol Protocol {
                     init?()
-
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     init?() {
                         guard let type = Type() else {
@@ -3630,71 +4198,103 @@ struct `Macro Tests` {
             }
         }
 
-        @Test(.tags(.default))
-        func `Initializer with external default`() {
+        @Test(.tags(.implementation))
+        func `Initializer with external implementation`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.external) init()
+                    @Implementation(.external) init()
                 }
                 """
             } expansion: {
                 """
                 protocol Protocol {
                     init()
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
-                
-                struct AnyProtocol: Protocol, TypeEraser {
+
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                 }
                 """
             }
         }
 
-        @Test(.tags(.default))
-        func `Initializer with no default`() {
+        @Test(.tags(.implementation))
+        func `Initializer with no implementation`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.error) init()
+                    @Implementation(.error) init()
                 }
                 """
             } expansion: {
                 #"""
                 protocol Protocol {
                     init()
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     init() {
-                        fatalError("Tried to access static member \(#function) from type eraser")
+                        preconditionFailure("Tried to access static member \(#function) from type eraser")
                     }
                 }
                 """#
@@ -3716,7 +4316,7 @@ struct `Macro Tests` {
                 """
                 @TypeErased
                 ┬──────────
-                ╰─ 🛑 Associated type 'T' must have a erasure specifier
+                ╰─ 🛑 Associated type 'T' does not have an associated eraser
                 protocol Protocol {
                     associatedtype T
                 }
@@ -3745,26 +4345,42 @@ struct `Macro Tests` {
                     associatedtype T3: Interface, Protocol
                     associatedtype T4: Interface & Protocol
                     associatedtype T5: Interface & Protocol, Class
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
-                    typealias T1 = Type
-                    typealias T2 = Type
-                    typealias T3 = Type
-                    typealias T4 = Type
-                    typealias T5 = Type
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                        associatedtype T1 = Type
+                        associatedtype T2 = Type
+                        associatedtype T3 = Type
+                        associatedtype T4 = Type
+                        associatedtype T5 = Type
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                 }
                 """
@@ -3792,26 +4408,42 @@ struct `Macro Tests` {
                     associatedtype T3: Interface, Protocol
                     associatedtype T4: Interface & Protocol
                     associatedtype T5: Interface & Protocol, Class
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
-                    typealias T1 = Any
-                    typealias T2 = (Interface)._Eraser_
-                    typealias T3 = (Interface & Protocol)._Eraser_
-                    typealias T4 = (Interface & Protocol)._Eraser_
-                    typealias T5 = (Interface & Protocol & Class)._Eraser_
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                        associatedtype T1 = Any
+                        associatedtype T2: Interface = AnyInterface
+                        associatedtype T3: Interface, Protocol = AnyInterfaceAndProtocol
+                        associatedtype T4: Interface, Protocol = AnyInterfaceAndProtocol
+                        associatedtype T5: Interface, Protocol, Class = AnyInterfaceAndProtocolAndClass
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                 }
                 """
@@ -3833,21 +4465,37 @@ struct `Macro Tests` {
                 """
                 protocol Protocol {
                     typealias T = Int
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     typealias T = Int
                 }
@@ -3856,7 +4504,6 @@ struct `Macro Tests` {
         }
     }
 
-    @Suite
     struct `Automatic Conformance Generation Tests` {
         @Test func `Protocol with equatable conformance`() {
             assertMacro {
@@ -3866,34 +4513,37 @@ struct `Macro Tests` {
                 """
             } expansion: {
                 """
-                protocol Protocol: Equatable {
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
+                protocol Protocol: Equatable {}
+
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
+                    /// The value wrapped by this instance.
+                    internal var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    internal init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    internal init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
-                    /// The value wrapped by this instance.
-                    var base: any Protocol
-                    /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
-                        self.base = erasing
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol, ErasedEquatable {
                     }
-                    /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
-                        self.base = erasing
-                    }
-                    static func == (left: Self, right: Self) -> Bool {
-                        return _isEqual(lhs: left.base, rhs: right.base)
-                    }
-                    private static func _isEqual<T: Equatable, U: Equatable>(lhs: T, rhs: U) -> Bool {
-                        if let rhsAsT = rhs as? T {
-                            return lhs == rhsAsT
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
                         }
-                        if let lhsAsU = lhs as? U {
-                            return lhsAsU == rhs
+                        set {
+                            base = newValue as! _Base_
                         }
-                        return false
                     }
                 }
                 """
@@ -3908,37 +4558,37 @@ struct `Macro Tests` {
                 """
             } expansion: {
                 """
-                protocol Protocol: Hashable {
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
+                protocol Protocol: Hashable {}
+
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
+                    /// The value wrapped by this instance.
+                    internal var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    internal init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    internal init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
-                    /// The value wrapped by this instance.
-                    var base: any Protocol
-                    /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
-                        self.base = erasing
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol, ErasedHashable {
                     }
-                    /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
-                        self.base = erasing
-                    }
-                    func hash(into hasher: inout Hasher) {
-                        hasher.combine(base)
-                    }
-                    static func == (left: Self, right: Self) -> Bool {
-                        return _isEqual(lhs: left.base, rhs: right.base)
-                    }
-                    private static func _isEqual<T: Equatable, U: Equatable>(lhs: T, rhs: U) -> Bool {
-                        if let rhsAsT = rhs as? T {
-                            return lhs == rhsAsT
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
                         }
-                        if let lhsAsU = lhs as? U {
-                            return lhsAsU == rhs
+                        set {
+                            base = newValue as! _Base_
                         }
-                        return false
                     }
                 }
                 """
@@ -3953,10 +4603,43 @@ struct `Macro Tests` {
                 """
             } diagnostics: {
                 """
-                @TypeErased
-                ┬──────────
-                ╰─ 🛑 Associated type 'ID' must have a erasure specifier
+
+                """
+            } expansion: {
+                """
                 protocol Protocol: Identifiable {}
+
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
+                    /// The value wrapped by this instance.
+                    internal var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    internal init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    internal init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol, ErasedIdentifiable {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
+                    }
+                }
                 """
             }
         }
@@ -3988,123 +4671,186 @@ struct `Macro Tests` {
                 """
                 protocol Protocol: Identifiable {
                     associatedtype ID: Hashable
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
-                    typealias ID = AnyHashable
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
                     }
-                    var id: ID {
-                        self.base.id
-                    }
-                }
-                protocol Protocol: Identifiable where ID == Int {
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser where ID == Int {
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol, ErasedIdentifiable {
+                        associatedtype ID = AnyHashable
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+                protocol Protocol: Identifiable where ID == Int {}
+
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
+                    /// The value wrapped by this instance.
+                    internal var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    internal init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    internal init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
                     typealias ID = Int
-                    /// The value wrapped by this instance.
-                    var base: any Protocol
-                    /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
-                        self.base = erasing
-                    }
-                    /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
-                        self.base = erasing
-                    }
-                    var id: ID {
-                        self.base.id
-                    }
-                }
-                protocol Protocol: Identifiable where Self.ID == Int {
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser where Self.ID == Int {
-                    typealias ID = Int
-                    /// The value wrapped by this instance.
-                    var base: any Protocol
-                    /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
-                        self.base = erasing
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol, ErasedIdentifiable {
                     }
-                    /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
-                        self.base = erasing
-                    }
-                    var id: ID {
-                        self.base.id
-                    }
-                }
-                protocol Protocol: Identifiable<Int> {
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
-                    typealias ID = Int
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+                protocol Protocol: Identifiable where Self.ID == Int {}
+
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
                     }
-                    var id: ID {
-                        self.base.id
+                    typealias ID = Int
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol, ErasedIdentifiable {
                     }
                 }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+                protocol Protocol: Identifiable<Int> {}
+
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
+                    /// The value wrapped by this instance.
+                    internal var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    internal init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    internal init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol, ErasedIdentifiable {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
                 protocol Protocol: Identifiable {
                     var id: Int { get }
-                
-                    /// Used for automatically resolving the type of `Erase` macro.
-                    typealias _Eraser_ = AnyProtocol
                 }
 
-                struct AnyProtocol: Protocol, TypeEraser {
-                    typealias ID = Int
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
                     /// The value wrapped by this instance.
-                    var base: any Protocol
+                    internal var base: any Protocol
                     /// Create an instance that type-erases `Protocol`.
-                    init(_ erasing: some Protocol) {
+                    internal init(_ erasing: some Protocol) {
                         self.base = erasing
                     }
                     /// Create an instance that type-erases `Protocol`.
-                    init(erasing: any Protocol) {
+                    internal init(erasing: any Protocol) {
                         self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol, ErasedIdentifiable {
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
+                    }
+                }
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
+                    }
+                }
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
+                    }
+                }
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
+                    }
+                }
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
                     }
                     var id: Int {
                         get {
                             func id_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Int  {
-                                var base: _OpenBase_ {
+                                var localBase: _OpenBase_ {
                                     get {
-                                        self.base as! _OpenBase_
+                                        self.base_Protocol as! _OpenBase_
                                     }
                                 };
-                                return base.id
+                                return implicitCast(localBase.id)
                             };
-                            return __implicitCast(_openExistential(self.base, do: id_genericOpen))
+                            return implicitCast(_openExistential(self.base_Protocol, do: id_genericOpen))
                         }
                     }
                 }
@@ -4113,15 +4859,15 @@ struct `Macro Tests` {
         }
     }
 
-    @Suite(.tags(.default))
-    struct `Default Tests` {
-        @Test func `Multiple default specifiers`() async throws {
+    @Suite(.tags(.implementation))
+    struct `Implementation Macro Tests` {
+        @Test func `Multiple implementation specifiers`() {
             assertMacro {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.error)
-                    @Default(.external)
+                    @Implementation(.error)
+                    @Implementation(.external)
                     static var variable: Any { get }
                 }
                 """
@@ -4129,12 +4875,12 @@ struct `Macro Tests` {
                 """
                 @TypeErased
                 protocol Protocol {
-                    @Default(.error)
-                    ┬───────────────
-                    ╰─ 🛑 Requirement can only have one default
-                    @Default(.external)
-                    ┬──────────────────
-                    ╰─ 🛑 Requirement can only have one default
+                    @Implementation(.error)
+                    ┬──────────────────────
+                    ╰─ 🛑 Static requirements must have a single explicit implementation
+                    @Implementation(.external)
+                    ┬─────────────────────────
+                    ╰─ 🛑 Static requirements must have a single explicit implementation
                     static var variable: Any { get }
                 }
                 """
@@ -4143,8 +4889,8 @@ struct `Macro Tests` {
     }
 
     @Suite(.tags(.option))
-    struct `Options Tests` {
-        @Test func `Multiple option specifiers`() async throws {
+    struct `Options Macro Tests` {
+        @Test func `Multiple option specifiers`() {
             assertMacro {
                 """
                 @TypeErased
@@ -4160,11 +4906,166 @@ struct `Macro Tests` {
                 protocol Protocol {
                     @Options([])
                     ┬───────────
-                    ╰─ 🛑 Only static requirements can have a default
+                    ╰─ 🛑 Trailing closure must be used
                     @Options(.assureNoAssociates)
                     ┬────────────────────────────
-                    ╰─ 🛑 Only static requirements can have a default
+                    ╰─ 🛑 Trailing closure must be used
                     var variable: Any { get }
+                }
+                """
+            }
+        }
+    }
+
+    @Suite(.tags(.option, .associateAndAssociateEraser))
+    struct `Associate And AssociateEraser Macro Tests` {
+        @Test func associate() {
+            assertMacro {
+                """
+                @TypeErased
+                protocol Protocol {
+                    @Associate<any Protocol>("AS")
+                    var variable: Any { get }
+                }
+                """
+            } expansion: {
+                """
+                protocol Protocol {
+                    var variable: Any { get }
+                }
+
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
+                    /// The value wrapped by this instance.
+                    internal var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    internal init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    internal init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                        associatedtype AS: Protocol = AnyProtocol
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
+                    }
+                        var variable: Any {
+                        get {
+                            func variable_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
+                                var localBase: _OpenBase_ {
+                                    get {
+                                        self.base_Protocol as! _OpenBase_
+                                    }
+                                };
+                                return implicitCast(localBase.variable)
+                            };
+                            return implicitCast(_openExistential(self.base_Protocol, do: variable_genericOpen))
+                        }
+                    }
+                }
+                """
+            }
+        }
+
+        @Test(.tags(.associateAndAssociateEraser))
+        func `Associate with non protocol`() {
+            assertMacro {
+                """
+                @TypeErased
+                protocol Protocol {
+                    @Associate<Struct>("AS")
+                    var variable: Any { get }
+                }
+                """
+            } diagnostics: {
+                """
+                @TypeErased
+                ┬──────────
+                ╰─ 🛑 The protocols must be prefixed with 'any'
+                protocol Protocol {
+                    @Associate<Struct>("AS")
+                    var variable: Any { get }
+                }
+                """
+            }
+        }
+
+        @Test(.tags(.associateAndAssociateEraser))
+        func `Associate eraser`() {
+            assertMacro {
+                """
+                @TypeErased
+                protocol Protocol {
+                    @AssociateEraser<Eraser>("AS")
+                    var variable: Any { get }
+                }
+                """
+            } expansion: {
+                """
+                protocol Protocol {
+                    var variable: Any { get }
+                }
+
+                /// A type erased `Protocol` value.
+                internal struct AnyProtocol: TypeEraser, ErasedProtocol {
+                    /// The value wrapped by this instance.
+                    internal var base: any Protocol
+                    /// Create an instance that type-erases `Protocol`.
+                    internal init(_ erasing: some Protocol) {
+                        self.base = erasing
+                    }
+                    /// Create an instance that type-erases `Protocol`.
+                    internal init(erasing: any Protocol) {
+                        self.base = erasing
+                    }
+                }
+
+                internal enum _ErasedStorageProtocol {
+                    internal protocol ErasedProtocol: TypeEraser, Protocol {
+                        associatedtype AS = Eraser
+                    }
+                }
+
+                internal typealias ErasedProtocol = _ErasedStorageProtocol.ErasedProtocol
+
+                internal extension _ErasedStorageProtocol.ErasedProtocol {
+                    private var base_Protocol: any Protocol {
+                        get {
+                            base as! any Protocol
+                        }
+                        set {
+                            base = newValue as! _Base_
+                        }
+                    }
+                        var variable: Any {
+                        get {
+                            func variable_genericOpen<_OpenBase_: Protocol>(_: _OpenBase_) -> Any  {
+                                var localBase: _OpenBase_ {
+                                    get {
+                                        self.base_Protocol as! _OpenBase_
+                                    }
+                                };
+                                return implicitCast(localBase.variable)
+                            };
+                            return implicitCast(_openExistential(self.base_Protocol, do: variable_genericOpen))
+                        }
+                    }
                 }
                 """
             }

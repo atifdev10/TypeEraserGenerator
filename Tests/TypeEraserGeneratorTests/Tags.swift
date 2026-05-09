@@ -1,7 +1,8 @@
 import Testing
 
 extension Tag {
-    @Tag static var `default`: Self
+    @Tag static var associateAndAssociateEraser: Self
+    @Tag static var implementation: Self
     @Tag static var option: Self
     @Tag static var erase: Self
 

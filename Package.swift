@@ -22,7 +22,7 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/swiftlang/swift-syntax.git",
-            from: "602.0.0-latest"
+            from: "603.0.0-latest"
         ),
         .package(
             url: "https://github.com/pointfreeco/swift-macro-testing.git",
@@ -32,12 +32,17 @@ let package = Package(
             url: "https://github.com/nicklockwood/SwiftFormat.git",
             from: "0.0.0-latest"
         ),
+        .package(
+            url: "https://github.com/apple/swift-algorithms.git",
+            from: "1.0.0-latest"
+        ),
     ],
     targets: [
         .macro(
             name: "TypeEraserGeneratorMacros",
             dependencies: [
                 "MultiModule",
+                .product(name: "Algorithms", package: "swift-algorithms"),
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
                 .product(name: "SwiftDiagnostics", package: "swift-syntax"),
                 .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
